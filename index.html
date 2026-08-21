@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALIET Online Examination Portal | Andhra Loyola Institute of Engineering and Technology</title>
+
+  <!-- External FontAwesome icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- SheetJS Excel Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="styles.css?v=1.5">
+</head>
+<body>
+
+  <!-- 13-Stage Continuous Opening Animation Overlay -->
+  <div id="intro-overlay" class="intro-overlay">
+    <div class="intro-content">
+      
+      <!-- Central Stage (Icons & Logos) -->
+      <div class="intro-stage-container">
+        
+        <!-- Stage 1 & 12: Official ALIET Logo -->
+        <img src="logo.png" alt="ALIET Logo" class="stage-icon stage-aliet-logo">
+
+        <!-- Stage 2: Education Symbol (Graduation Cap & Diploma) -->
+        <svg class="stage-icon stage-education" viewBox="0 0 100 100" fill="none" stroke="#800000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="50 18, 90 34, 50 50, 10 34" />
+          <path d="M26 41 V62 C26 62, 50 74, 74 62 V41" />
+          <path d="M82 38 V66 M82 66 L78 72 M82 66 L86 72" />
+          <path d="M20 78 C35 72, 50 78, 50 78 C50 78, 65 72, 80 78 V84 C65 78, 50 84, 50 84 C50 84, 35 78, 20 84 Z" />
+        </svg>
+
+        <!-- Stage 3: Research Symbol (Microscope) -->
+        <svg class="stage-icon stage-research" viewBox="0 0 100 100" fill="none" stroke="#800000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M25 85 H75 M50 85 V75 M50 75 C68 75 72 58 64 42 L52 48" />
+          <line x1="32" y1="20" x2="48" y2="44" stroke-width="3" />
+          <line x1="26" y1="14" x2="34" y2="24" stroke-width="4" />
+          <line x1="30" y1="62" x2="62" y2="62" stroke-width="3" />
+          <circle cx="65" cy="52" r="4" fill="#800000" />
+          <path d="M38 72 C42 66, 48 66, 52 72" />
+        </svg>
+
+        <!-- Stage 4: Science / Technology Symbol (Atom Orbits) -->
+        <svg class="stage-icon stage-science" viewBox="0 0 100 100" fill="none" stroke="#800000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="50" cy="50" r="7" fill="#800000" />
+          <ellipse cx="50" cy="50" rx="38" ry="14" />
+          <ellipse cx="50" cy="50" rx="38" ry="14" transform="rotate(60 50 50)" />
+          <ellipse cx="50" cy="50" rx="38" ry="14" transform="rotate(120 50 50)" />
+        </svg>
+
+        <!-- Stage 5: Service / Community Symbol (Helping Hands & Community) -->
+        <svg class="stage-icon stage-community" viewBox="0 0 100 100" fill="none" stroke="#800000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="50" cy="30" r="7" />
+          <circle cx="32" cy="36" r="6" />
+          <circle cx="68" cy="36" r="6" />
+          <path d="M36 48 C36 42 64 42 64 48" />
+          <path d="M20 54 C20 48 38 48 40 54" />
+          <path d="M60 54 C62 48 80 48 80 54" />
+          <path d="M22 72 L38 62 C42 60 48 62 50 65 L60 74" />
+          <path d="M78 72 L62 62 C58 60 52 62 50 65 L40 74" />
+        </svg>
+
+        <!-- Stage 6: Online Examination Symbol (Monitor & MCQ Test) -->
+        <svg class="stage-icon stage-exam" viewBox="0 0 100 100" fill="none" stroke="#800000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="15" y="18" width="70" height="48" rx="6" />
+          <path d="M40 66 L34 82 M60 66 L66 82 M30 82 H70" />
+          <path d="M26 30 H50 M26 38 H44 M26 46 H54" stroke-linecap="round" />
+          <rect x="60" y="28" width="14" height="14" rx="2" />
+          <path d="M63 35 L67 39 L74 30" stroke-width="3" />
+        </svg>
+
+        <!-- Stage 7: Randomized Questions Symbol (Shuffled MCQ Cards A/B/C/D) -->
+        <svg class="stage-icon stage-random" viewBox="0 0 100 100" fill="none" stroke="#800000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="28" y="20" width="50" height="60" rx="6" transform="rotate(-6 53 50)" stroke-dasharray="3 2" />
+          <rect x="22" y="20" width="56" height="60" rx="6" />
+          <circle cx="34" cy="34" r="5" />
+          <circle cx="34" cy="48" r="5" fill="#800000" />
+          <circle cx="34" cy="62" r="5" />
+          <line x1="44" y1="34" x2="68" y2="34" />
+          <line x1="44" y1="48" x2="70" y2="48" stroke-width="3" />
+          <line x1="44" y1="62" x2="64" y2="62" />
+          <path d="M74 24 C82 32 82 44 76 52 M76 52 L82 52 M76 52 L76 44" stroke-width="2.2" />
+        </svg>
+
+        <!-- Stage 8: Exam Security Symbol (Shield & Padlock) -->
+        <svg class="stage-icon stage-security" viewBox="0 0 100 100" fill="none" stroke="#800000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M50 16 L80 26 V48 C80 66 67 80 50 86 C33 80 20 66 20 48 V26 Z" />
+          <rect x="38" y="48" width="24" height="20" rx="4" fill="rgba(128,0,0,0.1)" />
+          <path d="M43 48 V40 C43 36 46 33 50 33 C54 33 57 36 57 40 V48" stroke-width="3" />
+          <circle cx="50" cy="57" r="2.5" fill="#800000" />
+        </svg>
+
+        <!-- Stage 9: Faith Symbol (Faith Emblem / Flame & Cross) -->
+        <svg class="stage-icon stage-faith" viewBox="0 0 100 100" fill="none" stroke="#800000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="50" cy="50" r="36" stroke-dasharray="6 3" />
+          <path d="M50 20 C42 34 36 46 36 58 C36 67 42 74 50 74 C58 74 64 67 64 58 C64 46 58 34 50 20 Z" />
+          <line x1="50" y1="36" x2="50" y2="64" stroke-width="3" />
+          <line x1="40" y1="46" x2="60" y2="46" stroke-width="3" />
+        </svg>
+
+        <!-- Stage 10: Service Symbol (Outreach & Support Crest) -->
+        <svg class="stage-icon stage-service" viewBox="0 0 100 100" fill="none" stroke="#800000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 56 C25 44 42 44 48 56 L50 58 L52 56 C58 44 75 44 82 56 C86 64 78 78 50 86 C22 78 14 64 18 56 Z" />
+          <path d="M50 30 L54 40 L64 40 L56 46 L59 56 L50 50 L41 56 L44 46 L36 40 L46 40 Z" fill="#800000" />
+        </svg>
+
+        <!-- Stage 11: Excellence Symbol (Laurel Wreath & Achievement Star) -->
+        <svg class="stage-icon stage-excellence" viewBox="0 0 100 100" fill="none" stroke="#800000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="50 24, 55 36, 68 37, 58 46, 61 59, 50 52, 39 59, 42 46, 32 37, 45 36" fill="rgba(128,0,0,0.12)" />
+          <path d="M28 76 C20 62 20 40 32 26 M24 64 C20 58 20 52 26 48 M26 48 C22 42 22 34 30 32" />
+          <path d="M72 76 C80 62 80 40 68 26 M76 64 C80 58 80 52 74 48 M74 48 C78 42 78 34 70 32" />
+          <path d="M38 78 L50 74 L62 78 M42 78 V86 L50 82 L58 86 V78" />
+        </svg>
+
+      </div>
+
+      <!-- Typography Container -->
+      <div class="intro-text-container">
+        <!-- Initial College Name (Stage 1) -->
+        <h1 class="intro-college-name">ANDHRA LOYOLA INSTITUTE OF ENGINEERING AND TECHNOLOGY</h1>
+
+        <!-- Final Project Title & Subtitle (Stage 13) -->
+        <div class="intro-final-title-group">
+          <h2 class="intro-portal-title">WEB-BASED<br><span>ONLINE EXAMINATION PORTAL</span></h2>
+          <p class="intro-portal-subtitle">Randomized Question Generation &amp; Exam Security</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Main Top Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-wrapper">
+        <div class="college-logo-container">
+          <img src="logo.png" alt="Andhra Loyola Institute of Engineering and Technology Logo" class="header-logo-img">
+        </div>
+        <div class="brand-text">
+          <h1>Andhra Loyola Institute of Engineering and Technology</h1>
+          <p><i class="fa-solid fa-graduation-cap"></i> Online Examination Portal</p>
+        </div>
+      </div>
+      <div class="header-right-group">
+        <div class="user-badge" id="header-user-badge" style="display: none; cursor: pointer;" onclick="handleLogout()" title="Click to Logout">
+          <div class="avatar" id="avatar-initials">K</div>
+          <div class="user-info">
+            <div class="user-name" id="header-student-name">Kalyan</div>
+            <div class="user-reg" id="header-student-reg">23A91A0501</div>
+          </div>
+        </div>
+        <button type="button" class="btn-secondary" onclick="handleStudentNav()" title="Student Examination Portal">
+          <i class="fa-solid fa-graduation-cap"></i> Student Portal
+        </button>
+        <button type="button" class="btn-secondary admin-header-btn" onclick="openAdminModal()" title="Faculty & Admin Dashboard">
+          <i class="fa-solid fa-user-gear"></i> Admin Dashboard
+        </button>
+
+      </div>
+    </div>
+  </header>
+
+
+  <!-- PAGE 1: STUDENT LOGIN -->
+  <main id="login-page" class="page-view active">
+    <div class="login-container">
+      <div class="glass-card login-card dark-glass-glow">
+        
+        <!-- Prominent Main Page Logo & College Name Below It -->
+        <div class="center-logo-container">
+          <div class="logo-hero-frame">
+            <img src="logo.png" alt="Andhra Loyola Institute of Engineering and Technology Crest" class="center-hero-logo">
+          </div>
+          <h1 class="main-college-title">Andhra Loyola Institute of Engineering and Technology</h1>
+          <p class="main-college-subtitle"><i class="fa-solid fa-graduation-cap"></i> Online Examination Portal</p>
+        </div>
+
+        <div class="engineering-badge">
+          <i class="fa-solid fa-microchip"></i> Mid-I Examination Assessment
+        </div>
+
+        <div class="login-header">
+          <h2 id="login-heading-text">Student Examination Login</h2>
+          <p>Please enter your Registration ID and Password to proceed</p>
+        </div>
+
+        <!-- Dynamic Error Banner Container -->
+        <div id="login-error-container" class="login-error-banner" style="display: none;" role="alert">
+          <i class="fa-solid fa-circle-exclamation error-icon"></i>
+          <span id="login-error-msg"></span>
+        </div>
+
+        <form id="login-form" onsubmit="event.preventDefault(); handleLogin();" novalidate>
+          <div class="form-group">
+            <label for="student-id" id="login-id-label"><i class="fa-regular fa-id-card"></i> Student Registration ID</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-user"></i>
+              <input type="text" id="student-id" class="input-control" placeholder="Enter Reg No (e.g. 24HPA10501)" required oninput="clearLoginError()">
+            </div>
+            <div class="input-hint-text"><i class="fa-solid fa-circle-info"></i> Allowed: <strong>24HPA10501</strong> to <strong>24HPA10566</strong></div>
+          </div>
+
+          <div class="form-group">
+            <label for="password"><i class="fa-solid fa-lock"></i> Account Password</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-key"></i>
+              <input type="password" id="password" class="input-control password-input" placeholder="Enter Password" required oninput="validatePasswordRealtime(); clearLoginError();">
+              <button type="button" class="password-toggle-btn" id="toggle-password-btn" onclick="togglePasswordVisibility()" title="Toggle Password Visibility" aria-label="Show or hide password">
+                <i class="fa-solid fa-eye" id="toggle-password-icon"></i>
+              </button>
+            </div>
+
+            <!-- Real-time Password Hints Grid -->
+            <div class="password-hints-container" id="password-hints">
+              <div class="hint-item" id="hint-length">
+                <i class="fa-solid fa-circle-xmark status-icon"></i>
+                <span>8+ characters</span>
+              </div>
+              <div class="hint-item" id="hint-upper">
+                <i class="fa-solid fa-circle-xmark status-icon"></i>
+                <span>1 uppercase letter</span>
+              </div>
+              <div class="hint-item" id="hint-symbol">
+                <i class="fa-solid fa-circle-xmark status-icon"></i>
+                <span>1 symbol (@, #, $, !, %, etc.)</span>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary" style="margin-top: 1.25rem;">
+            <span id="login-submit-btn-text">Authenticate & Enter</span> <i class="fa-solid fa-right-to-bracket"></i>
+          </button>
+        </form>
+
+        <div class="demo-hint" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem;">
+          <div><i class="fa-solid fa-user-check"></i> Registered Students: <span>24HPA10501</span> – <span>24HPA10566</span></div>
+          <button type="button" style="background: none; border: none; color: var(--primary); font-weight: 700; cursor: pointer; text-decoration: underline;" onclick="openAdminModal()">Admin Login</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- PAGE 2: STUDENT DASHBOARD -->
+  <main id="dashboard-page" class="page-view">
+    <div class="dashboard-grid">
+      <!-- Left Column: Student Details -->
+      <div class="glass-card">
+        <div class="dashboard-title">
+          <i class="fa-solid fa-user-graduate"></i> Student Profile Specification
+        </div>
+        <table class="details-table">
+          <tbody>
+            <tr>
+              <td>Student Name</td>
+              <td id="dash-student-name">Kalyan</td>
+            </tr>
+            <tr>
+              <td>Registration Number</td>
+              <td id="dash-reg-no">23A91A0501</td>
+            </tr>
+            <tr>
+              <td>Year / Program</td>
+              <td>III B.Tech (CSE)</td>
+            </tr>
+            <tr>
+              <td>Section / Branch</td>
+              <td>A - Computer Science</td>
+            </tr>
+            <tr>
+              <td>Examination</td>
+              <td>Mid-I Examination</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="exam-instructions">
+          <h5><i class="fa-solid fa-shield-halved"></i> Examination Protocol & Rules</h5>
+          <ul style="padding-left: 1.25rem; font-size: 0.8rem; margin-top: 0.4rem; color: var(--text-sub);">
+            <li>Total Duration: 20 Minutes (20 Multiple Choice Questions).</li>
+            <li>Do not refresh or close the browser window during testing.</li>
+            <li>Each question carries +1.0 Mark. No negative marking.</li>
+            <li>Auto-submission occurs automatically when the timer reaches 00:00.</li>
+          </ul>
+        </div>
+
+        <button type="button" class="btn-secondary" style="margin-top: 1rem; width: 100%; justify-content: center; font-size: 0.85rem;" onclick="handleLogout()">
+          <i class="fa-solid fa-right-from-bracket"></i> Logout / Switch Student
+        </button>
+      </div>
+
+      <!-- Right Column: Scheduled Examination Papers & Real-Time Start Window Status -->
+      <div class="glass-card">
+        <div class="dashboard-title">
+          <i class="fa-solid fa-clock-rotate-left"></i> Prescribed Examination Papers & Schedule Status
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.25rem;">
+          Select your scheduled examination. Ensure you click <strong>[ START EXAM ]</strong> within your permitted start window.
+        </p>
+
+        <!-- Dynamic Server-Authoritative Exam Schedules Container -->
+        <div id="student-schedules-container">
+          <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+            <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 1.5rem; color: var(--primary);"></i>
+            <p style="margin-top: 0.5rem;">Fetching real-time examination schedules & start window status...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- PAGE 3: ONLINE EXAMINATION -->
+  <main id="exam-page" class="page-view">
+    <!-- Top Meta & Timer Banner -->
+    <div class="exam-banner">
+      <div class="exam-banner-top">
+        <div class="meta-group">
+          <div class="meta-item">
+            <span>Candidate Name</span>
+            <strong id="exam-student-name">Kalyan</strong>
+          </div>
+          <div class="meta-item">
+            <span>Reg Number</span>
+            <strong id="exam-reg-no">23A91A0501</strong>
+          </div>
+          <div class="meta-item">
+            <span>Subject Paper</span>
+            <strong id="exam-subject-title">Computer Networks</strong>
+          </div>
+          <div class="meta-item">
+            <span>Session</span>
+            <strong>Mid-I Exam</strong>
+          </div>
+        </div>
+
+        <div class="timer-box" id="timer-container">
+          <i class="fa-regular fa-clock"></i>
+          <div>
+            <span style="display: block; font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Time Remaining</span>
+            <span id="timer-display">20:00</span>
+          </div>
+        </div>
+      </div>
+
+        <!-- Exam Security Live Status Bar -->
+        <div class="exam-security-bar" id="exam-security-bar">
+          <div class="sec-indicator-pill active" id="fullscreen-status-pill">
+            <i class="fa-solid fa-lock"></i> <span>🔒 Fullscreen Exam Mode</span>
+          </div>
+          <div class="sec-metrics-group">
+            <span class="sec-badge" id="sec-badge-fs-exits"><i class="fa-solid fa-compress"></i> Fullscreen Exits: <strong id="fs-exit-count-display">0</strong></span>
+            <span class="sec-badge" id="sec-badge-tab-switches"><i class="fa-solid fa-window-restore"></i> Tab Switches: <strong id="tab-switch-count-display">0</strong></span>
+            <span class="sec-badge warning-pill" id="sec-badge-violations"><i class="fa-solid fa-triangle-exclamation"></i> Violations: <strong id="violations-count-display">0</strong> / <span id="max-violations-display">3</span></span>
+          </div>
+        </div>
+
+      <!-- Live Exam Completion Progress Bar -->
+      <div class="exam-progress-wrapper" title="Exam Progress">
+        <div class="exam-progress-bar" id="exam-progress-bar"></div>
+      </div>
+    </div>
+
+    <!-- Main Exam Interface Grid -->
+    <div class="exam-layout">
+      <!-- Question Section -->
+      <div class="glass-card question-card">
+        <div>
+          <div class="question-header">
+            <div class="q-number" id="q-number-display">Question 1 of 20</div>
+            <div class="q-marks">+1.0 Mark</div>
+          </div>
+
+          <div class="q-body" id="q-text-display">
+            <!-- Question prompt loaded via JS -->
+          </div>
+
+          <div class="options-list" id="q-options-container">
+            <!-- Options rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Navigation Action Buttons -->
+        <div class="exam-controls">
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button type="button" class="btn-secondary" onclick="prevQuestion()">
+              <i class="fa-solid fa-arrow-left"></i> Previous
+            </button>
+            <button type="button" class="btn-secondary" onclick="nextQuestion()">
+              Next <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button type="button" class="btn-review" id="review-btn" onclick="toggleMarkForReview()">
+              <i class="fa-regular fa-bookmark"></i> Mark for Review
+            </button>
+            <button type="button" class="btn-secondary" onclick="clearAnswer()">
+              <i class="fa-solid fa-rotate-left"></i> Clear Selection
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Palette Sidebar -->
+      <div class="sidebar-panel">
+        <div class="glass-card" style="padding: 1.5rem;">
+          <div class="palette-title">Question Palette</div>
+
+          <div class="legend-grid">
+            <div class="legend-item"><span class="dot answered"></span> Answered</div>
+            <div class="legend-item"><span class="dot review"></span> Marked Review</div>
+            <div class="legend-item"><span class="dot current"></span> Current</div>
+            <div class="legend-item"><span class="dot unvisited"></span> Unvisited</div>
+          </div>
+
+          <!-- 20 Grid Pills -->
+          <div class="grid-palette" id="question-grid-palette">
+            <!-- Rendered by JS -->
+          </div>
+
+          <button type="button" class="btn-submit" onclick="confirmSubmitExam()">
+            <i class="fa-solid fa-paper-plane"></i> Final Submit
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- PAGE 4: RESULT SCREEN -->
+  <main id="result-page" class="page-view">
+    <div class="result-header">
+      <h2>Engineering Examination Result</h2>
+      <div class="status-badge pass" id="result-status-badge">
+        <i class="fa-solid fa-circle-check"></i> PASS ✅
+      </div>
+    </div>
+
+    <!-- Student Information & Summary Grid -->
+    <div class="dashboard-grid" style="margin-bottom: 2rem;">
+      <div class="glass-card">
+        <div class="dashboard-title">
+          <i class="fa-solid fa-id-badge"></i> Candidate Information
+        </div>
+        <table class="details-table">
+          <tbody>
+            <tr>
+              <td>Student Name</td>
+              <td id="res-student-name">Kalyan</td>
+            </tr>
+            <tr>
+              <td>Registration Number</td>
+              <td id="res-reg-no">23A91A0501</td>
+            </tr>
+            <tr>
+              <td>Subject Paper</td>
+              <td id="res-subject-name">Computer Networks</td>
+            </tr>
+            <tr>
+              <td>Examination</td>
+              <td>Mid-I Examination</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="glass-card">
+        <div class="dashboard-title">
+          <i class="fa-solid fa-chart-pie"></i> Evaluation Summary
+        </div>
+        <div class="stats-summary-grid">
+          <div class="stat-card">
+            <div class="label">Total Qs</div>
+            <div class="value" id="res-total-q">20</div>
+          </div>
+          <div class="stat-card correct">
+            <div class="label">Correct</div>
+            <div class="value" id="res-correct-count">17</div>
+          </div>
+          <div class="stat-card wrong">
+            <div class="label">Incorrect</div>
+            <div class="value" id="res-wrong-count">3</div>
+          </div>
+          <div class="stat-card marks">
+            <div class="label">Score</div>
+            <div class="value" id="res-marks-obtained">17 / 20</div>
+          </div>
+          <div class="stat-card percent">
+            <div class="label">Percentage</div>
+            <div class="value" id="res-percentage">85%</div>
+          </div>
+        </div>
+        <p style="font-size: 0.83rem; color: var(--text-muted); text-align: center;">
+          Performance evaluation generated and saved to examination server.
+        </p>
+      </div>
+    </div>
+
+    <!-- Detailed Answer Breakdown & Review -->
+    <div class="glass-card review-section">
+      <h3><i class="fa-solid fa-list-check"></i> Performance & Solutions Breakdown</h3>
+      <div class="review-list" id="answer-breakdown-list">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <div class="result-actions">
+        <button type="button" class="btn-primary" style="width: auto; background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);" onclick="exportResultToExcel()">
+          <i class="fa-solid fa-file-excel"></i> Export Result (.xlsx)
+        </button>
+        <button type="button" class="btn-secondary" onclick="downloadMasterExcel()">
+          <i class="fa-solid fa-download"></i> Master Excel File (.xlsx)
+        </button>
+        <button type="button" class="btn-secondary" onclick="window.print()">
+          <i class="fa-solid fa-print"></i> Print Scorecard
+        </button>
+        <button type="button" class="btn-secondary" onclick="returnToDashboard()">
+          <i class="fa-solid fa-rotate-right"></i> Select Another Paper
+        </button>
+        <button type="button" class="btn-primary" style="width: auto;" onclick="handleLogout()">
+          <i class="fa-solid fa-right-from-bracket"></i> Logout
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- PAGE 5: ADMIN DASHBOARD -->
+  <main id="admin-page" class="page-view">
+    <!-- Admin Header Banner -->
+    <div class="result-header" style="margin-bottom: 1.5rem;">
+      <div>
+        <h2 style="display: flex; align-items: center; gap: 0.6rem;">
+          <i class="fa-solid fa-user-gear" style="color: var(--primary);"></i> Faculty & Admin Control Center
+        </h2>
+        <p style="color: var(--text-muted); font-size: 0.88rem;">Andhra Loyola Institute of Engineering and Technology</p>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        <button type="button" class="btn-primary" style="width: auto; background: linear-gradient(135deg, #059669, #10b981);" onclick="downloadMasterExcel()">
+          <i class="fa-solid fa-file-excel"></i> Master Excel File (.xlsx)
+        </button>
+        <button type="button" class="btn-secondary" onclick="loadAdminDashboardData()">
+          <i class="fa-solid fa-rotate"></i> Refresh Data
+        </button>
+        <button type="button" class="btn-secondary" onclick="showPage('login-page')">
+          <i class="fa-solid fa-right-from-bracket"></i> Exit Admin
+        </button>
+      </div>
+    </div>
+
+    <!-- Metrics Cards Overview -->
+    <div class="stats-summary-grid" style="margin-bottom: 1.75rem;">
+      <div class="stat-card">
+        <div class="label">Total Students Roster</div>
+        <div class="value" id="adm-stat-total-students">66</div>
+      </div>
+      <div class="stat-card marks">
+        <div class="label">Total Exam Attempts</div>
+        <div class="value" id="adm-stat-total-attempts">0</div>
+      </div>
+      <div class="stat-card correct">
+        <div class="label">Pass Rate</div>
+        <div class="value" id="adm-stat-pass-rate">100%</div>
+      </div>
+      <div class="stat-card percent">
+        <div class="label">Active Subjects</div>
+        <div class="value" id="adm-stat-total-subjects">4</div>
+      </div>
+    </div>
+
+    <!-- Admin Tabs Header Navigation -->
+    <div class="admin-tabs-nav">
+      <button type="button" class="admin-tab-btn active" id="tab-btn-results" onclick="switchAdminTab('results')">
+        <i class="fa-solid fa-chart-line"></i> Exam Results Database
+      </button>
+      <button type="button" class="admin-tab-btn" id="tab-btn-students" onclick="switchAdminTab('students')">
+        <i class="fa-solid fa-users"></i> Students List (Roster)
+      </button>
+      <button type="button" class="admin-tab-btn" id="tab-btn-subjects" onclick="switchAdminTab('subjects')">
+        <i class="fa-solid fa-book-open"></i> Subjects & Question Bank
+      </button>
+      <button type="button" class="admin-tab-btn" id="tab-btn-schedules" onclick="switchAdminTab('schedules')">
+        <i class="fa-solid fa-calendar-clock"></i> Schedule Exam & Start Policy
+      </button>
+    </div>
+
+    <!-- TAB 1: EXAM RESULTS DATABASE -->
+    <div id="admin-tab-results" class="admin-tab-content active">
+      <div class="glass-card">
+        <div class="table-filter-bar">
+          <div class="input-wrapper" style="flex: 1; max-width: 400px;">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="admin-search-results" class="input-control" placeholder="Search Reg No, Name, or Subject..." onkeyup="filterAdminResultsTable()">
+          </div>
+
+          <div style="display: flex; gap: 0.75rem; align-items: center;">
+            <label style="font-size: 0.83rem; font-weight: 700; color: var(--text-sub);">Filter Status:</label>
+            <select id="admin-filter-status" class="input-control" style="width: 140px; padding: 0.6rem 0.8rem;" onchange="filterAdminResultsTable()">
+              <option value="ALL">All Status</option>
+              <option value="PASS">PASS Only</option>
+              <option value="FAIL">FAIL Only</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="admin-data-table">
+            <thead>
+              <tr>
+                <th>S.No</th>
+                <th>Reg Number</th>
+                <th>Student Name</th>
+                <th>Subject Paper</th>
+                <th>Marks</th>
+                <th>Percentage</th>
+                <th>Status</th>
+                <th>Submission Date</th>
+              </tr>
+            </thead>
+            <tbody id="admin-results-table-body">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: STUDENTS ROSTER -->
+    <div id="admin-tab-students" class="admin-tab-content" style="display: none;">
+      <div class="glass-card">
+        <div class="table-filter-bar">
+          <div class="input-wrapper" style="flex: 1; max-width: 400px;">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="admin-search-students" class="input-control" placeholder="Search student name or roll number..." onkeyup="filterAdminStudentsTable()">
+          </div>
+          <span style="font-size: 0.83rem; font-weight: 700; color: var(--text-muted);">CSE Section Roll Nos (24HPA10501 - 24HPA10566)</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="admin-data-table">
+            <thead>
+              <tr>
+                <th>S.No</th>
+                <th>Registration Roll No</th>
+                <th>Student Full Name</th>
+                <th>Year & Program</th>
+                <th>Branch / Section</th>
+                <th>Exam Status</th>
+              </tr>
+            </thead>
+            <tbody id="admin-students-table-body">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: SUBJECTS & QUESTION BANK -->
+    <div id="admin-tab-subjects" class="admin-tab-content" style="display: none;">
+      <div class="subjects-admin-grid" id="admin-subjects-grid">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+
+    <!-- TAB 4: STRICT EXAM SCHEDULING & LATE START POLICY -->
+    <div id="admin-tab-schedules" class="admin-tab-content" style="display: none;">
+      <div class="glass-card" style="margin-bottom: 1.5rem;">
+        <div class="dashboard-title">
+          <i class="fa-solid fa-calendar-plus"></i> Configure Examination Schedule & Strict Start Window
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.25rem;">
+          Configure strict server-authoritative exam start windows. Students attempting to start after <strong>Latest Allowed Start Time</strong> will be automatically marked as <code>CANCELLED</code> (<code>START_TIME_EXPIRED</code>).
+        </p>
+
+        <form id="admin-schedule-form" onsubmit="event.preventDefault(); handleAdminCreateSchedule();">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
+            <div class="form-group">
+              <label><i class="fa-solid fa-fingerprint"></i> Exam ID / Code</label>
+              <input type="text" id="sch-exam-id" class="input-control" placeholder="e.g. EXAM_CN_001" value="EXAM_CN_001" required>
+            </div>
+            <div class="form-group">
+              <label><i class="fa-solid fa-book"></i> Subject Paper Name</label>
+              <input type="text" id="sch-subject" class="input-control" placeholder="e.g. Computer Networks" value="Computer Networks" required>
+            </div>
+            <div class="form-group">
+              <label><i class="fa-solid fa-calendar-day"></i> Exam Date</label>
+              <input type="date" id="sch-date" class="input-control" required>
+            </div>
+            <div class="form-group">
+              <label><i class="fa-solid fa-clock"></i> Scheduled Start Time</label>
+              <input type="text" id="sch-start-time" class="input-control" placeholder="e.g. 10:00 AM" value="10:00 AM" required>
+            </div>
+            <div class="form-group">
+              <label style="color: var(--danger);"><i class="fa-solid fa-user-clock"></i> Latest Allowed Start Time</label>
+              <input type="text" id="sch-latest-start" class="input-control" placeholder="e.g. 10:05 AM" value="10:05 AM" required>
+            </div>
+            <div class="form-group">
+              <label><i class="fa-solid fa-hourglass-end"></i> Exam End Time</label>
+              <input type="text" id="sch-end-time" class="input-control" placeholder="e.g. 10:35 AM" value="10:35 AM" required>
+            </div>
+            <div class="form-group">
+              <label><i class="fa-solid fa-stopwatch"></i> Exam Duration (Minutes)</label>
+              <input type="number" id="sch-duration" class="input-control" value="30" min="5" max="180" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary">
+            <i class="fa-solid fa-floppy-disk"></i> Save & Publish Exam Schedule Policy
+          </button>
+        </form>
+      </div>
+
+      <!-- Live Active Schedules List -->
+      <div class="glass-card">
+        <div class="dashboard-title">
+          <i class="fa-solid fa-list-check"></i> Published Examination Schedules Overview
+        </div>
+        <div id="admin-schedules-list-container">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Admin Login Modal -->
+  <div class="modal-overlay" id="admin-auth-modal">
+    <div class="modal-content">
+      <div style="font-size: 2.5rem; color: var(--primary); margin-bottom: 0.75rem;">
+        <i class="fa-solid fa-user-gear"></i>
+      </div>
+      <h3>Faculty Admin Access</h3>
+      <p>Enter Administrator Passkey (Default: <strong>admin123</strong>)</p>
+
+      <form onsubmit="event.preventDefault(); verifyAdminPasskey();">
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <div class="input-wrapper">
+            <i class="fa-solid fa-key"></i>
+            <input type="password" id="admin-passkey-input" class="input-control" value="admin123" placeholder="Enter Admin Passkey" required>
+          </div>
+        </div>
+
+        <div class="modal-buttons">
+          <button type="button" class="btn-secondary" style="flex: 1;" onclick="closeAdminModal()">Cancel</button>
+          <button type="submit" class="btn-primary" style="flex: 1;">Unlock Portal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Submit Confirmation Modal -->
+  <div class="modal-overlay" id="submit-modal">
+    <div class="modal-content">
+      <div style="font-size: 2.5rem; color: var(--warning); margin-bottom: 0.75rem;">
+        <i class="fa-solid fa-circle-question"></i>
+      </div>
+      <h3>Submit Examination Paper?</h3>
+      <p id="modal-summary-text">Are you sure you want to finish and submit your exam paper?</p>
+
+      <div class="modal-buttons">
+        <button type="button" class="btn-secondary" style="flex: 1;" onclick="closeModal()">Continue Test</button>
+        <button type="button" class="btn-submit" style="flex: 1;" onclick="finalizeExamSubmission()">Confirm Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exam Security Warning Modal -->
+  <div class="modal-overlay" id="security-warning-modal">
+    <div class="modal-content security-modal-content">
+      <div class="security-modal-header" id="sec-modal-icon-wrapper">
+        <i class="fa-solid fa-shield-cat" id="sec-modal-icon"></i>
+      </div>
+      
+      <h3 id="sec-modal-title">⚠️ Security Warning</h3>
+      <div class="warning-level-badge" id="sec-warning-level-badge">Warning 1 of 3</div>
+      <p id="sec-modal-message">Please remain on the examination screen throughout the exam.</p>
+
+      <!-- Security Counters Breakdown -->
+      <div class="sec-modal-stats-grid">
+        <div class="sec-stat-card">
+          <div class="sec-stat-label">Fullscreen Exits</div>
+          <div class="sec-stat-val" id="sec-modal-fs-count">0</div>
+        </div>
+        <div class="sec-stat-card">
+          <div class="sec-stat-label">Tab Switches</div>
+          <div class="sec-stat-val" id="sec-modal-tab-count">0</div>
+        </div>
+        <div class="sec-stat-card warning">
+          <div class="sec-stat-label">Violations</div>
+          <div class="sec-stat-val" id="sec-modal-violations-count">0 / 3</div>
+        </div>
+      </div>
+
+      <!-- Live Security Event Log List -->
+      <div class="sec-log-container">
+        <div class="sec-log-title"><i class="fa-solid fa-list-ul"></i> Security Event Log</div>
+        <div class="sec-log-list" id="sec-modal-log-list">
+          <div class="sec-log-empty">No violations logged yet.</div>
+        </div>
+      </div>
+
+      <div class="modal-buttons" style="margin-top: 1.25rem;">
+        <button type="button" class="btn-primary" id="btn-re-fullscreen" onclick="returnToFullscreen()" style="display: none; background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);">
+          <i class="fa-solid fa-expand"></i> Return to Fullscreen
+        </button>
+        <button type="button" class="btn-primary" id="btn-close-sec-warning" onclick="dismissSecurityWarning()" style="flex: 1;">
+          <i class="fa-solid fa-shield"></i> Return to Exam
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="questions.js?v=1.5"></script>
+  <script src="app.js?v=1.5"></script>
+</body>
+</html>

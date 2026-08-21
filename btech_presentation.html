@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>B.Tech Project Presentation - Batch 14 - Web-Based Online Examination Portal</title>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #0b0f19;
+      --bg-card: rgba(18, 26, 43, 0.9);
+      --bg-card-hover: rgba(28, 40, 65, 0.95);
+      --border-color: rgba(255, 255, 255, 0.1);
+      --border-cyan: rgba(6, 182, 212, 0.4);
+      --border-gold: rgba(245, 158, 11, 0.4);
+      --primary-cyan: #06b6d4;
+      --primary-gold: #f59e0b;
+      --primary-purple: #8b5cf6;
+      --primary-emerald: #10b981;
+      --primary-red: #ef4444;
+      --text-white: #f8fafc;
+      --text-muted: #94a3b8;
+      --font-heading: 'Montserrat', sans-serif;
+      --font-body: 'Inter', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--bg-dark);
+      color: var(--text-white);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Ambient Glowing Orbs */
+    .ambient-orb-1 {
+      position: fixed;
+      top: -15%;
+      left: -15%;
+      width: 60vw;
+      height: 60vw;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.12) 0%, rgba(0,0,0,0) 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .ambient-orb-2 {
+      position: fixed;
+      bottom: -15%;
+      right: -15%;
+      width: 60vw;
+      height: 60vw;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, rgba(0,0,0,0) 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Progress Bar */
+    .progress-bar-container {
+      width: 100%;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.05);
+      position: relative;
+      z-index: 10;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 14.28%;
+      background: linear-gradient(90deg, var(--primary-cyan), var(--primary-purple), var(--primary-gold));
+      transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 0 12px var(--primary-cyan);
+    }
+
+    /* Deck Header */
+    header.deck-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.9rem 2rem;
+      background: rgba(11, 15, 25, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-color);
+      z-index: 10;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--text-white);
+    }
+
+    .brand-badge {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.05));
+      border: 1px solid var(--primary-gold);
+      color: var(--primary-gold);
+      padding: 0.25rem 0.65rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .btn-nav {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-color);
+      color: var(--text-white);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-family: var(--font-heading);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s ease;
+    }
+
+    .btn-nav:hover {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-nav.btn-accent {
+      background: linear-gradient(135deg, #06b6d4, #2563eb);
+      border: none;
+      box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+    }
+
+    .btn-nav.btn-accent:hover {
+      box-shadow: 0 6px 20px rgba(6, 182, 212, 0.5);
+    }
+
+    .slide-counter {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      min-width: 100px;
+      text-align: center;
+    }
+
+    /* Main Slide Viewport */
+    main.deck-viewport {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem 2rem;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .slide-container {
+      width: 100%;
+      max-width: 1280px;
+      height: 100%;
+      max-height: 720px;
+      position: relative;
+      display: flex;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      visibility: hidden;
+      transform: scale(0.97) translateY(12px);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 2rem 2.5rem;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+      overflow-y: auto;
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: scale(1) translateY(0);
+    }
+
+    /* Typography & Headers */
+    .slide-header {
+      margin-bottom: 1.5rem;
+    }
+
+    .slide-category {
+      font-family: var(--font-heading);
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--primary-gold);
+      margin-bottom: 0.3rem;
+    }
+
+    .slide-title {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--text-white);
+      line-height: 1.2;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      flex: 1;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+      flex: 1;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+
+    .content-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 1.25rem;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .content-card:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-cyan);
+      transform: translateY(-2px);
+    }
+
+    .card-title {
+      font-family: var(--font-heading);
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .card-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .card-list li {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .card-list li strong {
+      color: var(--text-white);
+      font-weight: 600;
+    }
+
+    .card-list li i {
+      color: var(--primary-cyan);
+      margin-top: 0.2rem;
+      font-size: 0.85rem;
+    }
+
+    /* Slide 1 Custom Layout */
+    .hero-slide {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    .hero-left {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: var(--primary-gold);
+      padding: 0.35rem 0.9rem;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      width: fit-content;
+    }
+
+    .hero-title {
+      font-family: var(--font-heading);
+      font-size: 2.6rem;
+      font-weight: 900;
+      line-height: 1.15;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 40%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-family: var(--font-heading);
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--primary-cyan);
+      margin-bottom: 1.5rem;
+      line-height: 1.4;
+    }
+
+    .metadata-block {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      font-size: 0.95rem;
+    }
+
+    .metadata-block span strong {
+      color: var(--primary-gold);
+    }
+
+    /* Dashboard Mockup Graphic (Slide 1 Right) */
+    .dashboard-mockup {
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--border-cyan);
+      border-radius: 16px;
+      padding: 1.25rem;
+      box-shadow: 0 15px 35px rgba(6, 182, 212, 0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .mockup-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 0.65rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .mockup-dots {
+      display: flex;
+      gap: 0.35rem;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .dot-red { background: #ef4444; }
+    .dot-yellow { background: #f59e0b; }
+    .dot-green { background: #10b981; }
+
+    .mockup-body {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .mock-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      padding: 0.65rem 0.85rem;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Flowchart Node Styles */
+    .flow-grid-8 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.85rem;
+      margin-top: 0.85rem;
+    }
+
+    .flow-node {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 0.9rem;
+      text-align: center;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .flow-node:hover {
+      border-color: var(--primary-cyan);
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.2);
+    }
+
+    .flow-node-title {
+      font-family: var(--font-heading);
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .flow-node-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Security Screen Mockup (Slide 5) */
+    .sec-dashboard {
+      background: rgba(15, 23, 42, 0.95);
+      border: 2px solid var(--primary-red);
+      border-radius: 14px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .sec-status-pill {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 0.65rem 0.9rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    /* Presenter Notes & Modals */
+    .notes-drawer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(11, 15, 25, 0.95);
+      border-top: 1px solid var(--primary-gold);
+      padding: 1rem 2rem;
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+      z-index: 20;
+    }
+
+    .notes-drawer.open {
+      transform: translateY(0);
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(10px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: var(--bg-dark);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 900px;
+      padding: 2rem;
+    }
+
+    .thumbs-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .thumb-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 0.85rem;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .thumb-item:hover, .thumb-item.active {
+      border-color: var(--primary-cyan);
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.3);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient Light Effects -->
+  <div class="ambient-orb-1"></div>
+  <div class="ambient-orb-2"></div>
+
+  <!-- Top Progress Bar -->
+  <div class="progress-bar-container">
+    <div class="progress-bar" id="progress-bar"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="deck-header">
+    <div class="brand-title">
+      <i class="fa-solid fa-shield-halved" style="color: var(--primary-gold); font-size: 1.3rem;"></i>
+      <span>B.Tech Project Review</span>
+      <span class="brand-badge">BATCH 14</span>
+    </div>
+
+    <div class="nav-controls">
+      <button class="btn-nav" id="btn-prev" onclick="prevSlide()"><i class="fa-solid fa-chevron-left"></i> Prev</button>
+      <span class="slide-counter" id="slide-counter">Slide 1 of 7</span>
+      <button class="btn-nav" id="btn-next" onclick="nextSlide()">Next <i class="fa-solid fa-chevron-right"></i></button>
+
+      <div style="width: 1px; height: 24px; background: rgba(255,255,255,0.1); margin: 0 0.25rem;"></div>
+
+      <button class="btn-nav" onclick="toggleThumbnails()"><i class="fa-solid fa-grip"></i> Slides</button>
+      <button class="btn-nav" onclick="toggleNotes()"><i class="fa-solid fa-sticky-note"></i> Notes</button>
+      <button class="btn-nav" onclick="toggleFullscreen()"><i class="fa-solid fa-expand"></i></button>
+      <a href="Batch14_BTech_Project_Presentation.pptx" download class="btn-nav btn-accent">
+        <i class="fa-solid fa-file-powerpoint"></i> Download .PPTX
+      </a>
+    </div>
+  </header>
+
+  <!-- Viewport -->
+  <main class="deck-viewport">
+    <div class="slide-container">
+
+      <!-- =========================================================================
+           SLIDE 1 — TITLE / PROJECT INTRODUCTION
+           ========================================================================= -->
+      <section class="slide hero-slide active" id="slide-1">
+        <div class="hero-left">
+          <div class="hero-badge">
+            <i class="fa-solid fa-graduation-cap"></i> B.Tech Final Year Project Viva • Batch No. 14
+          </div>
+          <h1 class="hero-title">WEB-BASED ONLINE EXAMINATION PORTAL</h1>
+          <p class="hero-subtitle">Randomized Question Generation and Exam Security</p>
+
+          <div class="metadata-block">
+            <span><strong>Project Batch No.:</strong> Batch 14</span>
+            <span><strong>Academic Year:</strong> 2026–2027</span>
+            <span><strong>Project Guide:</strong> Ms. K. Neeharika</span>
+          </div>
+
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <span style="background: rgba(6,182,212,0.15); border: 1px solid rgba(6,182,212,0.3); color: var(--primary-cyan); padding: 0.3rem 0.75rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600;"><i class="fa-solid fa-laptop"></i> Online Exam Dashboard</span>
+            <span style="background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.3); color: var(--primary-purple); padding: 0.3rem 0.75rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600;"><i class="fa-solid fa-shuffle"></i> Fisher-Yates MCQ Shuffle</span>
+            <span style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: var(--primary-gold); padding: 0.3rem 0.75rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600;"><i class="fa-solid fa-shield-cat"></i> Fullscreen & Focus Monitoring</span>
+          </div>
+        </div>
+
+        <div class="hero-right">
+          <!-- Team Members Card -->
+          <div class="content-card" style="border-color: var(--primary-purple); background: rgba(18, 26, 43, 0.95); margin-bottom: 1rem;">
+            <div class="card-title" style="color: var(--primary-gold);">
+              <i class="fa-solid fa-users"></i> TEAM MEMBERS
+            </div>
+            <ul class="card-list">
+              <li><i class="fa-solid fa-user-check"></i> <div><strong>1. G. Uday Kiran</strong> – 24HP1A0565</div></li>
+              <li><i class="fa-solid fa-user-check"></i> <div><strong>2. K. Nagarjuna</strong> – 24HP1A0552</div></li>
+              <li><i class="fa-solid fa-user-check"></i> <div><strong>3. Ranga Swamy</strong> – 24HP1A0561</div></li>
+              <li><i class="fa-solid fa-user-check"></i> <div><strong>4. V. Kalyan</strong> – 24HP1A0541</div></li>
+            </ul>
+          </div>
+
+          <!-- Futuristic Exam Dashboard Mockup Visual -->
+          <div class="dashboard-mockup">
+            <div class="mockup-header">
+              <div class="mockup-dots">
+                <span class="dot dot-red"></span>
+                <span class="dot dot-yellow"></span>
+                <span class="dot dot-green"></span>
+              </div>
+              <span style="font-size: 0.75rem; font-weight: 700; color: var(--primary-cyan);"><i class="fa-solid fa-lock"></i> SECURE EXAM UI MOCKUP</span>
+            </div>
+            <div class="mockup-body">
+              <div class="mock-card">
+                <span><i class="fa-solid fa-stopwatch" style="color: var(--primary-gold);"></i> Timer Countdown</span>
+                <strong style="color: var(--primary-gold);">29:58 Left</strong>
+              </div>
+              <div class="mock-card">
+                <span><i class="fa-solid fa-shuffle" style="color: var(--primary-cyan);"></i> Randomized Question</span>
+                <strong style="color: var(--primary-cyan);">20 / 20 MCQs</strong>
+              </div>
+              <div class="mock-card">
+                <span><i class="fa-solid fa-eye" style="color: var(--primary-emerald);"></i> Fullscreen Security</span>
+                <strong style="color: var(--primary-emerald);">Active Logged</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================================================================
+           SLIDE 2 — PROBLEM STATEMENT
+           ========================================================================= -->
+      <section class="slide" id="slide-2">
+        <div class="slide-header">
+          <div class="slide-category">Slide 02 / Problem Statement</div>
+          <h2 class="slide-title">Problems with Conventional Examination Systems</h2>
+        </div>
+
+        <div class="grid-2" style="margin-bottom: 1.25rem;">
+          <div class="content-card">
+            <div class="card-title" style="color: var(--primary-red);">
+              <i class="fa-solid fa-triangle-exclamation"></i> Limitations of Basic Systems
+            </div>
+            <ul class="card-list">
+              <li><i class="fa-solid fa-xmark" style="color: var(--primary-red);"></i> <strong>Manual Preparation:</strong> Time-consuming manual question-paper creation by faculty.</li>
+              <li><i class="fa-solid fa-xmark" style="color: var(--primary-red);"></i> <strong>Predictable Sequences:</strong> Students receive identical question orders, promoting unfair practices.</li>
+              <li><i class="fa-solid fa-xmark" style="color: var(--primary-red);"></i> <strong>Assessment Decay:</strong> Repeated static questions reduce overall test effectiveness.</li>
+              <li><i class="fa-solid fa-xmark" style="color: var(--primary-red);"></i> <strong>Grading Delays:</strong> Manual evaluation introduces human errors and slow score release.</li>
+              <li><i class="fa-solid fa-xmark" style="color: var(--primary-red);"></i> <strong>Zero Monitoring:</strong> Students can switch tabs or leave exam windows undetected.</li>
+            </ul>
+          </div>
+
+          <div class="content-card">
+            <div class="card-title" style="color: var(--primary-gold);">
+              <i class="fa-solid fa-diagram-project"></i> Problem → Challenges → Need Diagram
+            </div>
+            <ul class="card-list">
+              <li><i class="fa-solid fa-gears" style="color: var(--primary-gold);"></i> <strong>1. Manual Work:</strong> Paper creation & manual grading burden faculty resources.</li>
+              <li><i class="fa-solid fa-rotate" style="color: var(--primary-gold);"></i> <strong>2. Repetition:</strong> Static question papers facilitate cheating during tests.</li>
+              <li><i class="fa-solid fa-shield-virus" style="color: var(--primary-gold);"></i> <strong>3. Security Issues:</strong> Unrestricted tab switching & window blur.</li>
+              <li><i class="fa-solid fa-hourglass-half" style="color: var(--primary-gold);"></i> <strong>4. Delayed Results:</strong> Lack of automated real-time score publishing.</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Main Message Banner -->
+        <div style="background: rgba(6, 182, 212, 0.1); border: 1.5px solid var(--primary-cyan); border-radius: 14px; padding: 1.1rem 1.5rem; text-align: center;">
+          <div style="font-family: var(--font-heading); font-size: 0.8rem; font-weight: 800; color: var(--primary-gold); letter-spacing: 1px; margin-bottom: 0.3rem;">CORE MISSION REQUIREMENT</div>
+          <p style="font-size: 1.05rem; font-weight: 600; color: var(--text-white); line-height: 1.5;">
+            "There is a need for a centralized, automated and secure online examination platform that can generate randomized question papers, monitor examination behavior and evaluate answers instantly."
+          </p>
+        </div>
+      </section>
+
+      <!-- =========================================================================
+           SLIDE 3 — PROPOSED SYSTEM & WORKFLOW
+           ========================================================================= -->
+      <section class="slide" id="slide-3">
+        <div class="slide-header">
+          <div class="slide-category">Slide 03 / Proposed Solution</div>
+          <h2 class="slide-title">Proposed Online Examination Portal & Workflow</h2>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; font-size: 0.95rem; color: var(--text-muted);">
+          <strong style="color: var(--primary-cyan);">System Overview:</strong> Centralized web-based platform providing automated student authentication, dynamic 20-MCQ extraction, Fisher-Yates question/option shuffling, browser-level security monitoring, and instant automated evaluation.
+        </div>
+
+        <!-- Flowchart Node Grid -->
+        <div class="flow-grid-8">
+          <div class="flow-node" style="border-color: var(--primary-cyan);">
+            <i class="fa-solid fa-right-to-bracket" style="color: var(--primary-cyan); font-size: 1.3rem; margin-bottom: 0.4rem;"></i>
+            <div class="flow-node-title" style="color: var(--primary-cyan);">1. LOGIN</div>
+            <div class="flow-node-sub">Student Auth</div>
+          </div>
+
+          <div class="flow-node" style="border-color: var(--primary-cyan);">
+            <i class="fa-solid fa-list-check" style="color: var(--primary-cyan); font-size: 1.3rem; margin-bottom: 0.4rem;"></i>
+            <div class="flow-node-title" style="color: var(--primary-cyan);">2. SUBJECT SELECT</div>
+            <div class="flow-node-sub">Pick Exam Module</div>
+          </div>
+
+          <div class="flow-node" style="border-color: var(--primary-cyan);">
+            <i class="fa-solid fa-database" style="color: var(--primary-cyan); font-size: 1.3rem; margin-bottom: 0.4rem;"></i>
+            <div class="flow-node-title" style="color: var(--primary-cyan);">3. QUESTION BANK</div>
+            <div class="flow-node-sub">Load MCQ Repository</div>
+          </div>
+
+          <div class="flow-node" style="border-color: var(--primary-purple);">
+            <i class="fa-solid fa-dice" style="color: var(--primary-purple); font-size: 1.3rem; margin-bottom: 0.4rem;"></i>
+            <div class="flow-node-title" style="color: var(--primary-purple);">4. RANDOM 20 MCQs</div>
+            <div class="flow-node-sub">Extract 20 Items</div>
+          </div>
+
+          <div class="flow-node" style="border-color: var(--primary-purple);">
+            <i class="fa-solid fa-shuffle" style="color: var(--primary-purple); font-size: 1.3rem; margin-bottom: 0.4rem;"></i>
+            <div class="flow-node-title" style="color: var(--primary-purple);">5. SHUFFLE QUESTIONS</div>
+            <div class="flow-node-sub">Fisher-Yates Shuffle</div>
+          </div>
+
+          <div class="flow-node" style="border-color: var(--primary-gold);">
+            <i class="fa-solid fa-shield-halved" style="color: var(--primary-gold); font-size: 1.3rem; margin-bottom: 0.4rem;"></i>
+            <div class="flow-node-title" style="color: var(--primary-gold);">6. SECURE EXAM</div>
+            <div class="flow-node-sub">Fullscreen & Focus</div>
+          </div>
+
+          <div class="flow-node" style="border-color: var(--primary-emerald);">
+            <i class="fa-solid fa-calculator" style="color: var(--primary-emerald); font-size: 1.3rem; margin-bottom: 0.4rem;"></i>
+            <div class="flow-node-title" style="color: var(--primary-emerald);">7. AUTO EVALUATION</div>
+            <div class="flow-node-sub">Instant Scoring</div>
+          </div>
+
+          <div class="flow-node" style="border-color: var(--primary-emerald);">
+            <i class="fa-solid fa-square-poll-vertical" style="color: var(--primary-emerald); font-size: 1.3rem; margin-bottom: 0.4rem;"></i>
+            <div class="flow-node-title" style="color: var(--primary-emerald);">8. RESULT</div>
+            <div class="flow-node-sub">Publish Score Sheet</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================================================================
+           SLIDE 4 — RANDOMIZED MCQ SYSTEM & KEY FEATURES
+           ========================================================================= -->
+      <section class="slide" id="slide-4">
+        <div class="slide-header">
+          <div class="slide-category">Slide 04 / Question Randomization</div>
+          <h2 class="slide-title">Randomized MCQ System & Key Features</h2>
+        </div>
+
+        <div class="grid-2">
+          <div class="content-card">
+            <div class="card-title" style="color: var(--primary-purple);">
+              <i class="fa-solid fa-shuffle"></i> Fisher-Yates Question Randomization
+            </div>
+            <ul class="card-list">
+              <li><i class="fa-solid fa-check"></i> <strong>Subject Question Banks:</strong> Maintained for subjects like Computer Networks & Quantum Computing.</li>
+              <li><i class="fa-solid fa-check"></i> <strong>20-Question Extraction:</strong> Exactly 20 questions chosen randomly with zero duplicates.</li>
+              <li><i class="fa-solid fa-check"></i> <strong>Fisher-Yates Shuffle Algorithm:</strong> Applied for unbiased random ordering of questions & options A, B, C, D.</li>
+              <li><i class="fa-solid fa-check"></i> <strong>Correct Answer Preservation:</strong> Internal mapping remains locked to original correct choice despite option shuffling.</li>
+              <li><i class="fa-solid fa-check"></i> <strong>Unique Exam Instance:</strong> Every student receives a custom, non-replicable question paper.</li>
+            </ul>
+          </div>
+
+          <div class="content-card">
+            <div class="card-title" style="color: var(--primary-cyan);">
+              <i class="fa-solid fa-sliders"></i> Key Examination Engine Features
+            </div>
+            <ul class="card-list">
+              <li><i class="fa-solid fa-clock"></i> <strong>30-Minute Timer:</strong> Live countdown with automatic force submission on timeout.</li>
+              <li><i class="fa-solid fa-table-cells"></i> <strong>Question Palette:</strong> Visual status indicators for Answered vs Unanswered questions.</li>
+              <li><i class="fa-solid fa-floppy-disk"></i> <strong>Auto-Save Engine:</strong> Real-time background persistence of student selections.</li>
+              <li><i class="fa-solid fa-magnifying-glass"></i> <strong>Review Unanswered:</strong> Easy filtering to re-check skipped questions before submitting.</li>
+              <li><i class="fa-solid fa-bolt"></i> <strong>Instant Result:</strong> Automated score calculation upon test completion.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================================================================
+           SLIDE 5 — EXAM SECURITY
+           ========================================================================= -->
+      <section class="slide" id="slide-5">
+        <div class="slide-header">
+          <div class="slide-category">Slide 05 / Exam Security</div>
+          <h2 class="slide-title">Exam Security & Active Monitoring Protocols</h2>
+        </div>
+
+        <div class="grid-2">
+          <div class="content-card">
+            <div class="card-title" style="color: var(--primary-gold);">
+              <i class="fa-solid fa-shield-cat"></i> Browser Security Mechanisms
+            </div>
+            <ul class="card-list">
+              <li><i class="fa-solid fa-expand"></i> <strong>1. Fullscreen Mode:</strong> Browser requests fullscreen on start. Exit triggers warning prompt & logs violation.</li>
+              <li><i class="fa-solid fa-eye-slash"></i> <strong>2. Tab Switch & Focus Detection:</strong> Detects window blur, tab switching, or browser losing focus.</li>
+              <li><i class="fa-solid fa-code"></i> <strong>Web Security APIs:</strong> Fullscreen API (`fullscreenchange`), Page Visibility API (`visibilitychange`), Window Blur/Focus events.</li>
+              <li><i class="fa-solid fa-triangle-exclamation"></i> <strong>3-Tier Violation Protocol:</strong> 1st: Warning → 2nd: Strong Warning → 3rd: Final Warning.</li>
+              <li><i class="fa-solid fa-note-sticky"></i> <strong>Boundary Note:</strong> Clearly specifies browser-level monitoring (does not track external physical hardware).</li>
+            </ul>
+          </div>
+
+          <!-- Security Dashboard Graphic -->
+          <div class="sec-dashboard">
+            <div style="font-family: var(--font-heading); font-size: 0.95rem; font-weight: 800; color: var(--primary-red); display: flex; align-items: center; justify-content: space-between;">
+              <span><i class="fa-solid fa-lock"></i> EXAM SECURITY MONITORING DASHBOARD</span>
+              <span style="background: rgba(239,68,68,0.2); color: var(--primary-red); padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.75rem;">LIVE AUDIT</span>
+            </div>
+
+            <div class="sec-status-pill">
+              <span><i class="fa-solid fa-expand" style="color: var(--primary-emerald);"></i> FULLSCREEN STATUS</span>
+              <span style="color: var(--primary-emerald);">🟢 ACTIVE (LOCK ENGAGED)</span>
+            </div>
+
+            <div class="sec-status-pill">
+              <span><i class="fa-solid fa-eye" style="color: var(--primary-emerald);"></i> PAGE VISIBILITY</span>
+              <span style="color: var(--primary-emerald);">🟢 FOCUS DETECTED (TAB ACTIVE)</span>
+            </div>
+
+            <div class="sec-status-pill">
+              <span><i class="fa-solid fa-triangle-exclamation" style="color: var(--primary-gold);"></i> VIOLATION COUNTER</span>
+              <span style="color: var(--primary-gold);">⚠️ 1 / 3 WARNINGS LOGGED</span>
+            </div>
+
+            <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06); padding: 0.75rem; border-radius: 8px; font-size: 0.8rem; color: var(--text-muted);">
+              <strong style="color: var(--primary-cyan);">Security Event Log:</strong><br>
+              • 09:16:02 AM - FULLSCREEN_EXIT DETECTED (Warning #1 Issued)<br>
+              • 09:16:05 AM - FULLSCREEN_RESTORED (Student Returned)
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================================================================
+           SLIDE 6 — TECHNOLOGY STACK & SYSTEM ARCHITECTURE
+           ========================================================================= -->
+      <section class="slide" id="slide-6">
+        <div class="slide-header">
+          <div class="slide-category">Slide 06 / Architecture</div>
+          <h2 class="slide-title">Technology Stack & System Architecture</h2>
+        </div>
+
+        <div class="grid-4" style="margin-bottom: 1.25rem;">
+          <div class="content-card">
+            <div class="card-title" style="color: var(--primary-cyan); font-size: 1rem;">
+              <i class="fa-brands fa-react"></i> FRONTEND
+            </div>
+            <ul class="card-list" style="font-size: 0.85rem;">
+              <li><i class="fa-solid fa-check"></i> HTML5, CSS3, JS, React.js</li>
+              <li><i class="fa-solid fa-check"></i> UI, Login, Subject selection, Exam screen, Timer</li>
+            </ul>
+          </div>
+
+          <div class="content-card">
+            <div class="card-title" style="color: var(--primary-purple); font-size: 1rem;">
+              <i class="fa-brands fa-node-js"></i> BACKEND
+            </div>
+            <ul class="card-list" style="font-size: 0.85rem;">
+              <li><i class="fa-solid fa-check"></i> Node.js, Express.js</li>
+              <li><i class="fa-solid fa-check"></i> REST APIs, Exam sessions, Question retrieval</li>
+            </ul>
+          </div>
+
+          <div class="content-card">
+            <div class="card-title" style="color: var(--primary-gold); font-size: 1rem;">
+              <i class="fa-solid fa-database"></i> DATABASE
+            </div>
+            <ul class="card-list" style="font-size: 0.85rem;">
+              <li><i class="fa-solid fa-check"></i> MySQL or MongoDB</li>
+              <li><i class="fa-solid fa-check"></i> Student info, Question banks, Results & Security logs</li>
+            </ul>
+          </div>
+
+          <div class="content-card">
+            <div class="card-title" style="color: var(--primary-emerald); font-size: 1rem;">
+              <i class="fa-solid fa-shield"></i> SECURITY APIs
+            </div>
+            <ul class="card-list" style="font-size: 0.85rem;">
+              <li><i class="fa-solid fa-check"></i> Fullscreen API</li>
+              <li><i class="fa-solid fa-check"></i> Page Visibility API & Focus/Blur Events</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Layered Architecture Flow -->
+        <div style="background: rgba(18, 26, 43, 0.95); border: 1.5px solid var(--primary-cyan); border-radius: 14px; padding: 1.25rem; text-align: center;">
+          <div style="font-family: var(--font-heading); font-size: 0.85rem; font-weight: 800; color: var(--primary-gold); letter-spacing: 1px; margin-bottom: 0.75rem;">LAYERED ARCHITECTURE FLOW DIAGRAM</div>
+          <div style="display: flex; align-items: center; justify-content: space-around; gap: 0.5rem; flex-wrap: wrap;">
+            <div style="background: rgba(255,255,255,0.05); padding: 0.6rem 1rem; border-radius: 8px; font-weight: 700; font-size: 0.9rem; color: var(--text-white);">STUDENT</div>
+            <i class="fa-solid fa-arrow-right" style="color: var(--primary-cyan);"></i>
+            <div style="background: rgba(6,182,212,0.15); border: 1px solid var(--primary-cyan); padding: 0.6rem 1rem; border-radius: 8px; font-weight: 700; font-size: 0.9rem; color: var(--primary-cyan);">REACT FRONTEND (Security APIs)</div>
+            <i class="fa-solid fa-arrow-right" style="color: var(--primary-cyan);"></i>
+            <div style="background: rgba(139,92,246,0.15); border: 1px solid var(--primary-purple); padding: 0.6rem 1rem; border-radius: 8px; font-weight: 700; font-size: 0.9rem; color: var(--primary-purple);">NODE.JS / EXPRESS API</div>
+            <i class="fa-solid fa-arrow-right" style="color: var(--primary-cyan);"></i>
+            <div style="background: rgba(245,158,11,0.15); border: 1px solid var(--primary-gold); padding: 0.6rem 1rem; border-radius: 8px; font-weight: 700; font-size: 0.9rem; color: var(--primary-gold);">DATABASE / EXCEL QUESTION BANK</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================================================================
+           SLIDE 7 — RESULTS, BENEFITS & FUTURE SCOPE
+           ========================================================================= -->
+      <section class="slide" id="slide-7">
+        <div class="slide-header">
+          <div class="slide-category">Slide 07 / Results & Conclusion</div>
+          <h2 class="slide-title">Results, Benefits & Future Scope</h2>
+        </div>
+
+        <div class="grid-3" style="margin-bottom: 1.25rem;">
+          <div class="content-card">
+            <div class="card-title" style="color: var(--primary-emerald);">
+              <i class="fa-solid fa-circle-check"></i> Achieved Benefits
+            </div>
+            <ul class="card-list" style="font-size: 0.85rem;">
+              <li><i class="fa-solid fa-check"></i> Randomized un-copyable papers</li>
+              <li><i class="fa-solid fa-check"></i> Reduced question repetition</li>
+              <li><i class="fa-solid fa-check"></i> Zero-delay automated grading</li>
+              <li><i class="fa-solid fa-check"></i> Reduced faculty workload</li>
+              <li><i class="fa-solid fa-check"></i> Active browser security tracking</li>
+            </ul>
+          </div>
+
+          <div class="content-card">
+            <div class="card-title" style="color: var(--primary-cyan);">
+              <i class="fa-solid fa-square-poll-vertical"></i> Result Display Breakdown
+            </div>
+            <ul class="card-list" style="font-size: 0.85rem;">
+              <li><i class="fa-solid fa-user"></i> Student Name & Reg Number</li>
+              <li><i class="fa-solid fa-book"></i> Subject & Total Questions (20)</li>
+              <li><i class="fa-solid fa-chart-bar"></i> Correct, Wrong & Unanswered</li>
+              <li><i class="fa-solid fa-percent"></i> Marks Obtained & Percentage</li>
+              <li><i class="fa-solid fa-award"></i> Immediate Pass/Fail status</li>
+            </ul>
+          </div>
+
+          <div class="content-card">
+            <div class="card-title" style="color: var(--primary-purple);">
+              <i class="fa-solid fa-rocket"></i> Future Scope
+            </div>
+            <ul class="card-list" style="font-size: 0.85rem;">
+              <li><i class="fa-solid fa-chart-line"></i> Admin Dashboard & Analytics</li>
+              <li><i class="fa-solid fa-lock"></i> Stronger Student Authentication</li>
+              <li><i class="fa-solid fa-eye"></i> Advanced proctoring integration</li>
+              <li><i class="fa-solid fa-cloud"></i> Cloud deployment & scaling</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Closing Banner -->
+        <div style="background: rgba(18, 26, 43, 0.95); border: 1.5px solid var(--primary-gold); border-radius: 14px; padding: 1rem 1.5rem; text-align: center;">
+          <h3 style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 900; color: var(--primary-gold); margin-bottom: 0.3rem;">THANK YOU!</h3>
+          <p style="font-size: 0.95rem; font-weight: 600; color: var(--text-white);">
+            Team: G. Uday Kiran | K. Nagarjuna | Ranga Swamy | V. Kalyan &nbsp;•&nbsp; Batch 14 | Academic Year 2026–2027 | Guide: Ms. K. Neeharika
+          </p>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Presenter Notes Drawer -->
+  <div class="notes-drawer" id="notes-drawer">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; color: var(--primary-gold); font-family: var(--font-heading); font-weight: 700; font-size: 0.9rem;">
+      <span><i class="fa-solid fa-comment-dots"></i> VIVA PRESENTATION NOTES</span>
+      <button onclick="toggleNotes()" style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="notes-content" style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.5;">
+      Use Left/Right Arrow keys or PageUp/PageDown to navigate slides during project review.
+    </div>
+  </div>
+
+  <!-- Thumbnails Modal -->
+  <div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this) toggleThumbnails()">
+    <div class="modal-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; font-family: var(--font-heading); font-size: 1.3rem; font-weight: 700;">
+        <span>Slide Directory - Batch 14</span>
+        <button onclick="toggleThumbnails()" style="background:none; border:none; color:var(--text-white); cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="thumbs-grid">
+        <div class="thumb-item active" onclick="goToSlide(1)">
+          <div style="font-weight: 700; color: var(--primary-gold); font-size: 0.8rem;">SLIDE 1</div>
+          <div style="font-size: 0.75rem;">Title & Team</div>
+        </div>
+        <div class="thumb-item" onclick="goToSlide(2)">
+          <div style="font-weight: 700; color: var(--primary-gold); font-size: 0.8rem;">SLIDE 2</div>
+          <div style="font-size: 0.75rem;">Problem Statement</div>
+        </div>
+        <div class="thumb-item" onclick="goToSlide(3)">
+          <div style="font-weight: 700; color: var(--primary-gold); font-size: 0.8rem;">SLIDE 3</div>
+          <div style="font-size: 0.75rem;">Proposed Workflow</div>
+        </div>
+        <div class="thumb-item" onclick="goToSlide(4)">
+          <div style="font-weight: 700; color: var(--primary-gold); font-size: 0.8rem;">SLIDE 4</div>
+          <div style="font-size: 0.75rem;">Randomized MCQs</div>
+        </div>
+        <div class="thumb-item" onclick="goToSlide(5)">
+          <div style="font-weight: 700; color: var(--primary-gold); font-size: 0.8rem;">SLIDE 5</div>
+          <div style="font-size: 0.75rem;">Exam Security</div>
+        </div>
+        <div class="thumb-item" onclick="goToSlide(6)">
+          <div style="font-weight: 700; color: var(--primary-gold); font-size: 0.8rem;">SLIDE 6</div>
+          <div style="font-size: 0.75rem;">Tech Architecture</div>
+        </div>
+        <div class="thumb-item" onclick="goToSlide(7)">
+          <div style="font-weight: 700; color: var(--primary-gold); font-size: 0.8rem;">SLIDE 7</div>
+          <div style="font-size: 0.75rem;">Results & Future</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 7;
+
+    const notesMap = {
+      1: "Slide 1: Introduce Project Title, Batch 14, Academic Year 2026-2027, Guide Ms. K. Neeharika, and team members G. Uday Kiran, K. Nagarjuna, Ranga Swamy, and V. Kalyan.",
+      2: "Slide 2: Explain limitations of manual question paper creation, static sequence predictability, manual grading errors, and lack of tab-switching monitoring.",
+      3: "Slide 3: Walk through the 12-step proposed system workflow from Student Login to Subject Selection, 20-MCQ Extraction, Shuffling, Security Enforcement, and Instant Result.",
+      4: "Slide 4: Detail the Fisher-Yates Shuffle Algorithm for question and option randomization, option answer preservation, 30-min timer, and question palette.",
+      5: "Slide 5: Explain browser security enforcement via Fullscreen API and Page Visibility API, 3-tier warning system, violation logging, and scope boundary.",
+      6: "Slide 6: Showcase technology stack (React.js, Node.js/Express, MySQL/MongoDB, Excel Question Bank) and layered architecture diagram.",
+      7: "Slide 7: Conclude with key achieved benefits, result sheet layout, future scope (biometrics, cloud scaling), and final Thank You block."
+    };
+
+    function updateDeck() {
+      document.querySelectorAll('.slide').forEach((slide, idx) => {
+        if (idx + 1 === currentSlide) {
+          slide.classList.add('active');
+        } else {
+          slide.classList.remove('active');
+        }
+      });
+
+      const percentage = (currentSlide / totalSlides) * 100;
+      document.getElementById('progress-bar').style.width = `${percentage}%`;
+      document.getElementById('slide-counter').innerText = `Slide ${currentSlide} of ${totalSlides}`;
+      document.getElementById('notes-content').innerText = notesMap[currentSlide];
+
+      document.querySelectorAll('.thumb-item').forEach((item, idx) => {
+        if (idx + 1 === currentSlide) {
+          item.classList.add('active');
+        } else {
+          item.classList.remove('active');
+        }
+      });
+
+      document.getElementById('btn-prev').disabled = (currentSlide === 1);
+      document.getElementById('btn-next').disabled = (currentSlide === totalSlides);
+      document.getElementById('btn-prev').style.opacity = (currentSlide === 1) ? '0.5' : '1';
+      document.getElementById('btn-next').style.opacity = (currentSlide === totalSlides) ? '0.5' : '1';
+    }
+
+    function nextSlide() { if (currentSlide < totalSlides) { currentSlide++; updateDeck(); } }
+    function prevSlide() { if (currentSlide > 1) { currentSlide--; updateDeck(); } }
+    function goToSlide(num) { currentSlide = num; updateDeck(); document.getElementById('modal-overlay').classList.remove('open'); }
+    function toggleNotes() { document.getElementById('notes-drawer').classList.toggle('open'); }
+    function toggleThumbnails() { document.getElementById('modal-overlay').classList.toggle('open'); }
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) { document.documentElement.requestFullscreen(); }
+      else { if (document.exitFullscreen) document.exitFullscreen(); }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') nextSlide();
+      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') prevSlide();
+      else if (e.key === 'Home') goToSlide(1);
+      else if (e.key === 'End') goToSlide(7);
+      else if (e.key === 'n' || e.key === 'N') toggleNotes();
+      else if (e.key === 'g' || e.key === 'G') toggleThumbnails();
+    });
+
+    updateDeck();
+  </script>
+</body>
+</html>
