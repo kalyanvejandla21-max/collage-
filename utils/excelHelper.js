@@ -31,7 +31,7 @@ const sampleRecords = [
   },
   {
     'S.No': 2,
-    'Registration Number': '24HPA10564',
+    'Registration Number': '24HP1A0564',
     'Student Name': 'G. Uday Kiran',
     'Subject Paper': 'Finite Automata',
     'Total Questions': 20,
@@ -44,7 +44,7 @@ const sampleRecords = [
   },
   {
     'S.No': 3,
-    'Registration Number': '24HPA10501',
+    'Registration Number': '24HP1A0501',
     'Student Name': 'A. Sai Ram',
     'Subject Paper': 'Data Warehouse and Data Mining',
     'Total Questions': 20,
@@ -57,7 +57,7 @@ const sampleRecords = [
   },
   {
     'S.No': 4,
-    'Registration Number': '24HPA10502',
+    'Registration Number': '24HP1A0502',
     'Student Name': 'B. Vamsi Krishna',
     'Subject Paper': 'Fundamentals of Computing',
     'Total Questions': 20,
@@ -70,7 +70,7 @@ const sampleRecords = [
   },
   {
     'S.No': 5,
-    'Registration Number': '24HPA10503',
+    'Registration Number': '24HP1A0503',
     'Student Name': 'Ch. Harika',
     'Subject Paper': 'Computer Networks',
     'Total Questions': 20,

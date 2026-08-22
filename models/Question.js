@@ -26,6 +26,23 @@ const questionSchema = new mongoose.Schema({
   explanation: {
     type: String,
     default: ''
+  },
+  topic: {
+    type: String,
+    default: 'General'
+  },
+  difficulty: {
+    type: String,
+    enum: ['EASY', 'MEDIUM', 'HARD'],
+    default: 'MEDIUM'
+  },
+  marks: {
+    type: Number,
+    default: 1
+  },
+  hint: {
+    type: String,
+    default: ''
   }
 }, { timestamps: true });
 

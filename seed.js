@@ -9,7 +9,7 @@ const sampleStudents = [
   { regNo: "23A91A0501", name: "Kalyan", year: "III B.Tech", section: "A" },
   { regNo: "24HP1A0541", name: "Kalyan", year: "III B.Tech", section: "A" },
   { regNo: "24HP1A0564", name: "G. Uday Kiran", year: "III B.Tech", section: "A" },
-  { regNo: "24HPA10564", name: "G. Uday Kiran", year: "III B.Tech", section: "A" }
+  { regNo: "24HP1A0501", name: "A. Sai Ram", year: "III B.Tech", section: "A" }
 ];
 
 const seedDatabase = async () => {

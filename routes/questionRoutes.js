@@ -14,15 +14,42 @@ function shuffleArray(array) {
   return arr;
 }
 
-// Randomly samples 20 questions and shuffles options (preserving correct answer)
-function processRandomExamPaper(questionList, limit = 20) {
-  if (!questionList || questionList.length === 0) return [];
-  
-  // 1. Randomly sample 'limit' (20) questions out of available pool
-  const sampled = shuffleArray(questionList).slice(0, limit);
+const ExamSchedule = require('../models/ExamSchedule');
 
-  // 2. Shuffle question order & options while tracking correct answer
-  return sampled.map((q, idx) => {
+// Difficulty-based or random question sampling with Fisher-Yates shuffle
+function processRandomExamPaper(questionList, limit = 20, difficultyDist = null) {
+  if (!questionList || questionList.length === 0) return [];
+
+  let selectedPool = [];
+
+  // 1. Check if a valid difficulty distribution is provided (e.g. { easy: 3, medium: 4, hard: 3 })
+  if (difficultyDist && (difficultyDist.easy > 0 || difficultyDist.medium > 0 || difficultyDist.hard > 0)) {
+    const easyPool = shuffleArray(questionList.filter(q => (q.difficulty || 'MEDIUM').toUpperCase() === 'EASY'));
+    const mediumPool = shuffleArray(questionList.filter(q => (q.difficulty || 'MEDIUM').toUpperCase() === 'MEDIUM'));
+    const hardPool = shuffleArray(questionList.filter(q => (q.difficulty || 'MEDIUM').toUpperCase() === 'HARD'));
+
+    const selectedEasy = easyPool.slice(0, difficultyDist.easy);
+    const selectedMedium = mediumPool.slice(0, difficultyDist.medium);
+    const selectedHard = hardPool.slice(0, difficultyDist.hard);
+
+    selectedPool = [...selectedEasy, ...selectedMedium, ...selectedHard];
+
+    // Top-up if pools were smaller than requested distribution
+    if (selectedPool.length < limit) {
+      const remainingNeeded = limit - selectedPool.length;
+      const unusedPool = shuffleArray(questionList.filter(q => !selectedPool.includes(q)));
+      selectedPool = [...selectedPool, ...unusedPool.slice(0, remainingNeeded)];
+    }
+  } else {
+    // Standard random sampling
+    selectedPool = shuffleArray(questionList).slice(0, limit);
+  }
+
+  // Shuffle final combined order
+  const finalShuffled = shuffleArray(selectedPool);
+
+  // 2. Shuffle options while maintaining correct answer tracking
+  return finalShuffled.map((q, idx) => {
     const options = Array.isArray(q.options) ? [...q.options] : [];
     const correctIdx = typeof q.correct === 'number' ? q.correct : 0;
     const correctText = options[correctIdx] || options[0];
@@ -37,6 +64,9 @@ function processRandomExamPaper(questionList, limit = 20) {
       question: q.question,
       options: shuffledOpts,
       correct: newCorrectIdx !== -1 ? newCorrectIdx : 0,
+      difficulty: q.difficulty || 'MEDIUM',
+      marks: q.marks || 1,
+      hint: q.hint || '',
       explanation: q.explanation || ''
     };
   });
@@ -52,10 +82,12 @@ router.get('/subjects', async (req, res) => {
   }
 });
 
-// GET /api/questions/:subject - Fetch 20 randomized questions with shuffled options
+// GET /api/questions/:subject - Fetch randomized questions with difficulty selection support
 router.get('/:subject', async (req, res) => {
   try {
     const subjectParam = req.params.subject;
+    const { examId, easyCount, mediumCount, hardCount, limit } = req.query;
+
     let questions = await Question.find({ subject: subjectParam }).lean();
     
     // Fallback to Excel files directly if MongoDB returns empty
@@ -67,14 +99,39 @@ router.get('/:subject', async (req, res) => {
       }
     }
 
-    // Process 20 random sampling + question shuffling + option shuffling
-    const examPaper = processRandomExamPaper(questions, 20);
+    let difficultyDist = null;
+    let targetLimit = parseInt(limit || 20, 10);
+
+    // If examId passed, check if exam schedule has difficulty distribution
+    if (examId) {
+      const schedule = await ExamSchedule.findOne({ examId: examId.toUpperCase() });
+      if (schedule) {
+        targetLimit = schedule.totalQuestions || 20;
+        if (schedule.easyCount > 0 || schedule.mediumCount > 0 || schedule.hardCount > 0) {
+          difficultyDist = {
+            easy: schedule.easyCount,
+            medium: schedule.mediumCount,
+            hard: schedule.hardCount
+          };
+        }
+      }
+    } else if (easyCount !== undefined || mediumCount !== undefined || hardCount !== undefined) {
+      difficultyDist = {
+        easy: parseInt(easyCount || 0, 10),
+        medium: parseInt(mediumCount || 0, 10),
+        hard: parseInt(hardCount || 0, 10)
+      };
+    }
+
+    // Process random sampling + difficulty distribution + question & option shuffling
+    const examPaper = processRandomExamPaper(questions, targetLimit, difficultyDist);
 
     res.json({
       success: true,
       subject: subjectParam,
       totalPoolCount: questions.length,
       count: examPaper.length,
+      difficultyDistribution: difficultyDist,
       questions: examPaper
     });
   } catch (error) {

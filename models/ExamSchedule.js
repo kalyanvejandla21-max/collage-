@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
 
 const examScheduleSchema = new mongoose.Schema({
+  examName: {
+    type: String,
+    trim: true
+  },
   examId: {
     type: String,
     required: true,
@@ -38,6 +42,30 @@ const examScheduleSchema = new mongoose.Schema({
   totalQuestions: {
     type: Number,
     default: 20
+  },
+  marksPerQuestion: {
+    type: Number,
+    default: 1
+  },
+  passingPercentage: {
+    type: Number,
+    default: 40
+  },
+  easyCount: {
+    type: Number,
+    default: 0
+  },
+  mediumCount: {
+    type: Number,
+    default: 0
+  },
+  hardCount: {
+    type: Number,
+    default: 0
+  },
+  isActive: {
+    type: Boolean,
+    default: true
   },
   createdBy: {
     type: String,

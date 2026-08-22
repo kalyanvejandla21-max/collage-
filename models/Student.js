@@ -25,6 +25,11 @@ const studentSchema = new mongoose.Schema({
     type: String,
     default: 'password123'
   },
+  role: {
+    type: String,
+    enum: ['STUDENT', 'FACULTY', 'ADMIN'],
+    default: 'STUDENT'
+  },
   createdAt: {
     type: Date,
     default: Date.now

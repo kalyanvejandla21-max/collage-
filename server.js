@@ -8,21 +8,38 @@ const authRoutes = require('./routes/authRoutes');
 const questionRoutes = require('./routes/questionRoutes');
 const resultRoutes = require('./routes/resultRoutes');
 const examRoutes = require('./routes/examRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 const ExamSchedule = require('./models/ExamSchedule');
+const Student = require('./models/Student');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB & Seed Exam Schedules
+// Connect to MongoDB & Seed Exam Schedules & Faculty Account
 connectDB().then(async () => {
   try {
     const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
     const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
+    // Seed Faculty Admin User
+    await Student.findOneAndUpdate(
+      { regNo: 'FACULTY01' },
+      {
+        regNo: 'FACULTY01',
+        name: 'Faculty Coordinator',
+        year: 'Faculty',
+        section: 'CSE',
+        password: 'admin123',
+        role: 'FACULTY'
+      },
+      { upsert: true, new: true }
+    );
+
     // Seed Computer Networks Schedule
     await ExamSchedule.findOneAndUpdate(
       { examId: 'EXAM_CN_001' },
       {
+        examName: 'Mid-Term Computer Networks Exam',
         examId: 'EXAM_CN_001',
         subject: 'Computer Networks',
         examDate: today,
@@ -30,7 +47,11 @@ connectDB().then(async () => {
         latestAllowedStartTime: '10:05 AM',
         endTime: '10:35 AM',
         durationMinutes: 30,
-        totalQuestions: 20
+        totalQuestions: 20,
+        easyCount: 5,
+        mediumCount: 10,
+        hardCount: 5,
+        isActive: true
       },
       { upsert: true, new: true }
     );
@@ -39,6 +60,7 @@ connectDB().then(async () => {
     await ExamSchedule.findOneAndUpdate(
       { examId: 'EXAM_QC_002' },
       {
+        examName: 'Quantum Computing Fundamentals',
         examId: 'EXAM_QC_002',
         subject: 'Quantum Computing',
         examDate: tomorrow,
@@ -46,7 +68,11 @@ connectDB().then(async () => {
         latestAllowedStartTime: '10:05 AM',
         endTime: '10:35 AM',
         durationMinutes: 30,
-        totalQuestions: 20
+        totalQuestions: 20,
+        easyCount: 5,
+        mediumCount: 10,
+        hardCount: 5,
+        isActive: true
       },
       { upsert: true, new: true }
     );
@@ -59,7 +85,7 @@ connectDB().then(async () => {
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 // Serve static frontend files (index.html, styles.css, app.js, questions.js)
 app.use(express.static(__dirname));
@@ -69,6 +95,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/questions', questionRoutes);
 app.use('/api/results', resultRoutes);
 app.use('/api/exams', examRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Admin Direct Route - Serves main app page & triggers Admin Login modal
 app.get('/admin', (req, res) => {

@@ -6,9 +6,8 @@ const Student = require('../models/Student');
 const studentNameMap = {
   "23A91A0501": "Kalyan",
   "24HP1A0541": "Kalyan",
-  "24HPA10541": "Kalyan",
   "24HP1A0564": "G. Uday Kiran",
-  "24HPA10564": "G. Uday Kiran"
+  "24HP1A0501": "A. Sai Ram"
 };
 
 const sampleStudentNames = [
@@ -42,8 +41,8 @@ router.post('/login', async (req, res) => {
 
     const cleanReg = regNo.trim().toUpperCase();
 
-    // 1. Strict Roll Number Range Validation (24HPA10501 - 24HPA10566)
-    const rollMatch = cleanReg.match(/^24HPA105(\d{2})$/);
+    // 1. Strict Roll Number Range Validation (24HP1A0501 - 24HP1A0566)
+    const rollMatch = cleanReg.match(/^24HP1A05(\d{2})$/);
     if (!rollMatch) {
       return res.status(400).json({ 
         success: false, 

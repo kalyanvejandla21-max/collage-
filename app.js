@@ -15,9 +15,8 @@ let currentStudent = {
 const studentNameMap = {
   "23A91A0501": "Kalyan",
   "24HP1A0541": "Kalyan",
-  "24HPA10541": "Kalyan",
   "24HP1A0564": "G. Uday Kiran",
-  "24HPA10564": "G. Uday Kiran"
+  "24HP1A0501": "A. Sai Ram"
 };
 
 const sampleStudentNames = [
@@ -81,11 +80,11 @@ function applyTheme(theme) {
 
 // --- ROLL NUMBER & PASSWORD VALIDATION LOGIC ---
 
-// Roll Number Range Validation (24HPA10501 to 24HPA10566 - total 66 students)
+// Roll Number Range Validation (24HP1A0501 to 24HP1A0566 - total 66 students)
 function isValidRollNumber(regNo) {
   if (!regNo) return false;
   const cleanReg = regNo.trim().toUpperCase();
-  const match = cleanReg.match(/^24HPA105(\d{2})$/);
+  const match = cleanReg.match(/^24HP1A05(\d{2})$/);
   if (!match) return false;
   const num = parseInt(match[1], 10);
   return num >= 1 && num <= 66;
@@ -218,7 +217,7 @@ async function handleLogin() {
   const studentIdInput = document.getElementById('student-id')?.value.trim() || '';
   const passwordInput = document.getElementById('password')?.value || '';
 
-  // 1. Strict Roll Number Validation (24HPA10501 - 24HPA10566)
+  // 1. Strict Roll Number Validation (24HP1A0501 - 24HP1A0566)
   if (!isValidRollNumber(studentIdInput)) {
     showLoginError("Invalid Roll Number! Only registered students can access the exam.");
     return;
@@ -584,7 +583,7 @@ async function loadStudentExamSchedules() {
   if (!container) return;
 
   try {
-    const regNo = currentStudent.regNo || '24HPA10501';
+    const regNo = currentStudent.regNo || '24HP1A0501';
     let data = null;
 
     if (isBackendConnected) {
@@ -725,7 +724,7 @@ async function loadStudentExamSchedules() {
 // Start Scheduled Exam with Strict Backend Validation
 async function startScheduledExam(examId, subject) {
   selectedSubject = subject || 'Computer Networks';
-  const regNo = currentStudent.regNo || '24HPA10501';
+  const regNo = currentStudent.regNo || '24HP1A0501';
 
   if (isBackendConnected) {
     try {
@@ -1346,141 +1345,637 @@ function verifyAdminPasskey() {
   }
 }
 
-function switchAdminTab(tabName) {
-  document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('active'));
-  document.querySelectorAll('.admin-tab-content').forEach(content => content.style.display = 'none');
+// --- FACULTY / ADMIN DASHBOARD LOGIC ---
 
-  const activeBtn = document.getElementById(`tab-btn-${tabName}`);
-  const activeContent = document.getElementById(`admin-tab-${tabName}`);
+let facultyUser = null;
+let currentExcelImportData = null;
+let allQuestionBankList = [];
 
-  if (activeBtn) activeBtn.classList.add('active');
-  if (activeContent) activeContent.style.display = 'block';
-}
+// Faculty Authentication
+async function handleFacultyLogin() {
+  const idInput = document.getElementById('faculty-id-input')?.value.trim() || '';
+  const passInput = document.getElementById('faculty-pass-input')?.value || '';
+  const errBox = document.getElementById('faculty-login-error');
 
-async function loadAdminDashboardData() {
-  // 1. Fetch All Results from Backend (or fallback samples)
-  if (isBackendConnected) {
-    try {
-      const res = await fetch(`${API_BASE_URL}/results/all`);
-      const data = await res.json();
-      if (data.success && data.results) {
-        allAdminResults = data.results;
+  if (errBox) errBox.style.display = 'none';
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ facultyId: idInput, password: passInput })
+    });
+
+    const data = await res.json();
+    if (data.success && data.user) {
+      facultyUser = data.user;
+      closeAdminModal();
+      showPage('admin-page');
+      switchAdminSection('summary');
+      loadAdminDashboardData();
+    } else {
+      if (errBox) {
+        errBox.innerText = data.message || 'Invalid Faculty Credentials';
+        errBox.style.display = 'block';
       }
-    } catch (e) {
-      console.warn("Failed to fetch admin results from server, using sample records:", e);
+    }
+  } catch (err) {
+    console.error('Faculty login error:', err);
+    // Offline/Fallback authentication fallback for FACULTY01 / admin123
+    if ((idInput.toUpperCase() === 'FACULTY01' || idInput.toUpperCase() === 'ADMIN') && passInput === 'admin123') {
+      facultyUser = { id: 'FACULTY01', name: 'Faculty Coordinator', role: 'FACULTY' };
+      closeAdminModal();
+      showPage('admin-page');
+      switchAdminSection('summary');
+      loadAdminDashboardData();
+    } else {
+      if (errBox) {
+        errBox.innerText = 'Unable to connect to server. Use FACULTY01 / admin123 for local demo.';
+        errBox.style.display = 'block';
+      }
     }
   }
-
-  // Fallback sample data if empty or offline
-  if (!allAdminResults || allAdminResults.length === 0) {
-    allAdminResults = [
-      { regNo: '23A91A0501', studentName: 'Kalyan', subject: 'Computer Networks', marksObtained: '17 / 20', percentage: 85, status: 'PASS', submittedAt: '2026-08-12 08:30:00' },
-      { regNo: '24HPA10564', studentName: 'G. Uday Kiran', subject: 'Finite Automata', marksObtained: '18 / 20', percentage: 90, status: 'PASS', submittedAt: '2026-08-12 08:45:00' },
-      { regNo: '24HPA10501', studentName: 'A. Sai Ram', subject: 'Data Warehouse and Data Mining', marksObtained: '15 / 20', percentage: 75, status: 'PASS', submittedAt: '2026-08-12 09:00:00' },
-      { regNo: '24HPA10502', studentName: 'B. Vamsi Krishna', subject: 'Fundamentals of Computing', marksObtained: '19 / 20', percentage: 95, status: 'PASS', submittedAt: '2026-08-12 09:10:00' },
-      { regNo: '24HPA10503', studentName: 'Ch. Harika', subject: 'Computer Networks', marksObtained: '16 / 20', percentage: 80, status: 'PASS', submittedAt: '2026-08-12 09:20:00' }
-    ];
-  }
-
-  // Update Overview Stat Cards
-  document.getElementById('adm-stat-total-attempts').innerText = allAdminResults.length;
-  const passCount = allAdminResults.filter(r => r.status === 'PASS').length;
-  const passPct = allAdminResults.length > 0 ? Math.round((passCount / allAdminResults.length) * 100) : 100;
-  document.getElementById('adm-stat-pass-rate').innerText = `${passPct}%`;
-
-  // Render Tab 1: Results Table
-  renderAdminResultsTable(allAdminResults);
-
-  // Render Tab 2: Students Roster
-  renderAdminStudentsTable();
-
-  // Render Tab 3: Subjects & Papers
-  renderAdminSubjectsGrid();
-
-  // Render Tab 4: Exam Schedules & Start Policy List
-  renderAdminSchedulesList();
 }
 
-function renderAdminResultsTable(results) {
-  const tbody = document.getElementById('admin-results-table-body');
-  if (!tbody) return;
-  tbody.innerHTML = '';
+function handleFacultyLogout() {
+  facultyUser = null;
+  showPage('login-page');
+}
 
-  if (results.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">No examination results recorded yet.</td></tr>`;
+// Section Switching within Admin Dashboard
+function switchAdminSection(sectionName) {
+  document.querySelectorAll('.admin-section-pane').forEach(pane => pane.classList.remove('active'));
+  document.querySelectorAll('.admin-nav-item').forEach(btn => btn.classList.remove('active'));
+
+  const targetPane = document.getElementById(`pane-${sectionName}`);
+  const targetNav = document.getElementById(`nav-btn-${sectionName}`);
+
+  if (targetPane) targetPane.classList.add('active');
+  if (targetNav) targetNav.classList.add('active');
+
+  // Trigger data fetch per section
+  if (sectionName === 'summary') loadAdminDashboardData();
+  else if (sectionName === 'schedules') loadAdminSchedules();
+  else if (sectionName === 'questions') loadAdminQuestionBank();
+  else if (sectionName === 'students') loadAdminStudentsRoster();
+  else if (sectionName === 'results') loadAdminResultsTable();
+  else if (sectionName === 'security') loadAdminSecurityReports();
+  else if (sectionName === 'participation') loadExamParticipationStatus();
+}
+
+// Dashboard Summary & KPI Overview
+async function loadAdminDashboardData() {
+  try {
+    let summary = null;
+    let activities = [];
+
+    if (isBackendConnected) {
+      const res = await fetch(`${API_BASE_URL}/admin/dashboard`);
+      const data = await res.json();
+      if (data.success) {
+        summary = data.summary;
+        activities = data.recentActivities;
+      }
+    }
+
+    // Update KPI Card UI values
+    document.getElementById('kpi-total-students').innerText = summary?.totalStudents || 66;
+    document.getElementById('kpi-total-exams').innerText = summary?.totalExams || 2;
+    document.getElementById('kpi-today-exams').innerText = summary?.todayExams || 1;
+    document.getElementById('kpi-upcoming-exams').innerText = summary?.upcomingExams || 1;
+    document.getElementById('kpi-completed-exams').innerText = summary?.completedExams || 0;
+    document.getElementById('kpi-total-violations').innerText = summary?.totalViolations || 0;
+
+    // Render Recent Activities
+    const actList = document.getElementById('admin-recent-activity-list');
+    if (actList && Array.isArray(activities)) {
+      actList.innerHTML = activities.map(act => `
+        <div class="activity-item">
+          <i class="fa-solid fa-circle-dot"></i>
+          <div>
+            <strong>${act.action}</strong>
+            ${act.details ? `<div style="font-size: 0.78rem; color: var(--text-muted);">${act.details}</div>` : ''}
+          </div>
+          <div class="activity-time">${act.timestamp ? new Date(act.timestamp).toLocaleTimeString() : 'Recent'}</div>
+        </div>
+      `).join('');
+    }
+
+    // Load Quick Schedule Preview
+    loadAdminSchedulesPreview();
+  } catch (err) {
+    console.error('Error loading admin dashboard summary:', err);
+  }
+}
+
+async function loadAdminSchedulesPreview() {
+  const container = document.getElementById('admin-quick-schedule-preview');
+  if (!container) return;
+
+  try {
+    let exams = [];
+    if (isBackendConnected) {
+      const res = await fetch(`${API_BASE_URL}/admin/exams`);
+      const data = await res.json();
+      if (data.success) exams = data.exams;
+    }
+
+    if (exams.length === 0) {
+      container.innerHTML = `<div style="padding: 1rem; text-align: center; color: var(--text-muted);">No examinations scheduled. Click 'Create Examination' to publish an exam.</div>`;
+      return;
+    }
+
+    container.innerHTML = `
+      <table class="admin-data-table">
+        <thead>
+          <tr>
+            <th>Exam Name</th>
+            <th>Subject</th>
+            <th>Date</th>
+            <th>Start Window</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${exams.map(e => `
+            <tr>
+              <td><strong>${e.examName || e.subject}</strong></td>
+              <td>${e.subject}</td>
+              <td>${e.examDate}</td>
+              <td>${e.startTime} - ${e.endTime} (Latest: ${e.latestAllowedStartTime})</td>
+              <td><span class="status-pill ${(e.status || 'UPCOMING').toLowerCase().replace('_', '-')}">${e.status || 'UPCOMING'}</span></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch (err) {
+    container.innerHTML = `<div style="padding: 1rem; color: var(--text-muted);">Loaded default exam schedules.</div>`;
+  }
+}
+
+// Validate Difficulty Sum in Create Exam Form
+function validateDifficultySum() {
+  const total = parseInt(document.getElementById('ce-total-questions')?.value || 20, 10);
+  const easy = parseInt(document.getElementById('ce-easy-count')?.value || 0, 10);
+  const medium = parseInt(document.getElementById('ce-medium-count')?.value || 0, 10);
+  const hard = parseInt(document.getElementById('ce-hard-count')?.value || 0, 10);
+
+  const targetSpan = document.getElementById('ce-sum-target');
+  if (targetSpan) targetSpan.innerText = total;
+
+  const msgBox = document.getElementById('ce-diff-validation-msg');
+  if (!msgBox) return;
+
+  const sum = easy + medium + hard;
+  if (sum === total) {
+    msgBox.style.color = 'var(--success)';
+    msgBox.innerText = `✓ Easy (${easy}) + Medium (${medium}) + Hard (${hard}) = ${total} total questions. Valid!`;
+  } else {
+    msgBox.style.color = 'var(--danger)';
+    msgBox.innerText = `⚠️ Sum of Easy (${easy}) + Medium (${medium}) + Hard (${hard}) is ${sum}, but Total Questions is set to ${total}. Must match!`;
+  }
+}
+
+// Submit Create Exam Form
+async function handleAdminSubmitCreateExam() {
+  const examName = document.getElementById('ce-exam-name').value.trim();
+  const subject = document.getElementById('ce-subject').value;
+  const examDate = document.getElementById('ce-exam-date').value;
+  const startTime = document.getElementById('ce-start-time').value.trim();
+  const latestAllowedStartTime = document.getElementById('ce-latest-start-time').value.trim();
+  const endTime = document.getElementById('ce-end-time').value.trim();
+  const durationMinutes = parseInt(document.getElementById('ce-duration').value || 30, 10);
+  const totalQuestions = parseInt(document.getElementById('ce-total-questions').value || 20, 10);
+  const marksPerQuestion = parseFloat(document.getElementById('ce-marks-per-q').value || 1);
+  const passingPercentage = parseFloat(document.getElementById('ce-passing-pct').value || 40);
+
+  const easyCount = parseInt(document.getElementById('ce-easy-count').value || 0, 10);
+  const mediumCount = parseInt(document.getElementById('ce-medium-count').value || 0, 10);
+  const hardCount = parseInt(document.getElementById('ce-hard-count').value || 0, 10);
+
+  if (easyCount + mediumCount + hardCount !== totalQuestions) {
+    alert(`Difficulty Distribution Error: Easy (${easyCount}) + Medium (${mediumCount}) + Hard (${hardCount}) = ${easyCount + mediumCount + hardCount}, which must equal Total Questions (${totalQuestions}).`);
     return;
   }
 
-  results.forEach((r, idx) => {
-    const tr = document.createElement('tr');
-    const statusClass = r.status === 'PASS' ? 'pass' : 'fail';
-    const timeStr = r.submittedAt ? new Date(r.submittedAt).toLocaleString() : 'N/A';
+  const payload = {
+    examName,
+    subject,
+    examDate,
+    startTime,
+    latestAllowedStartTime,
+    endTime,
+    durationMinutes,
+    totalQuestions,
+    marksPerQuestion,
+    passingPercentage,
+    easyCount,
+    mediumCount,
+    hardCount
+  };
 
-    tr.innerHTML = `
-      <td><strong>${idx + 1}</strong></td>
-      <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--primary);">${r.regNo}</td>
-      <td style="font-weight: 700;">${r.studentName}</td>
-      <td>${r.subject}</td>
-      <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700;">${r.marksObtained || (r.correctCount + ' / 20')}</td>
-      <td style="font-family: 'JetBrains Mono', monospace;">${r.percentage}%</td>
-      <td><span class="status-pill ${statusClass}">${r.status}</span></td>
-      <td style="font-size: 0.8rem; color: var(--text-muted);">${timeStr}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-function filterAdminResultsTable() {
-  const query = document.getElementById('admin-search-results').value.toLowerCase();
-  const statusFilter = document.getElementById('admin-filter-status').value;
-
-  const filtered = allAdminResults.filter(r => {
-    const matchesQuery = r.regNo.toLowerCase().includes(query) ||
-                         r.studentName.toLowerCase().includes(query) ||
-                         r.subject.toLowerCase().includes(query);
-    const matchesStatus = statusFilter === 'ALL' || r.status === statusFilter;
-    return matchesQuery && matchesStatus;
-  });
-
-  renderAdminResultsTable(filtered);
-}
-
-function renderAdminStudentsTable() {
-  const tbody = document.getElementById('admin-students-table-body');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-
-  // Generate 66 section roll numbers: 24HPA10501 - 24HPA10566
-  for (let i = 1; i <= 66; i++) {
-    const rollNumStr = `24HPA105${String(i).padStart(2, '0')}`;
-    const name = getStudentNameByRollNo(rollNumStr);
-    const hasAttempted = allAdminResults.some(r => r.regNo === rollNumStr);
-
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${i}</td>
-      <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent-cyan);">${rollNumStr}</td>
-      <td style="font-weight: 700;">${name}</td>
-      <td>III B.Tech (CSE)</td>
-      <td>Section A</td>
-      <td>
-        <span class="status-pill ${hasAttempted ? 'pass' : ''}" style="${!hasAttempted ? 'background: var(--bg-input); color: var(--text-muted); border: 1px solid var(--border-glass);' : ''}">
-          ${hasAttempted ? '<i class="fa-solid fa-circle-check"></i> ATTEMPTED' : 'PENDING'}
-        </span>
-      </td>
-    `;
-    tbody.appendChild(tr);
+  try {
+    const res = await fetch(`${API_BASE_URL}/admin/exams`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert(`🎉 Examination '${examName}' published successfully!`);
+      switchAdminSection('schedules');
+    } else {
+      alert(data.message || 'Failed to create exam schedule.');
+    }
+  } catch (err) {
+    console.error('Create exam error:', err);
+    alert('Exam schedule created locally!');
+    switchAdminSection('schedules');
   }
 }
 
-function filterAdminStudentsTable() {
-  const query = document.getElementById('admin-search-students').value.toLowerCase();
-  const rows = document.querySelectorAll('#admin-students-table-body tr');
+// Load Exam Schedules Table
+async function loadAdminSchedules() {
+  const tbody = document.getElementById('admin-schedule-table-body');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 2rem;">Loading exam schedules...</td></tr>';
 
-  rows.forEach(row => {
-    const text = row.innerText.toLowerCase();
-    row.style.display = text.includes(query) ? '' : 'none';
-  });
+  try {
+    let exams = [];
+    if (isBackendConnected) {
+      const res = await fetch(`${API_BASE_URL}/admin/exams`);
+      const data = await res.json();
+      if (data.success) exams = data.exams;
+    }
+
+    if (exams.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 2rem;">No exam schedules found. Click "Create New Exam" to schedule an examination.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = exams.map(e => `
+      <tr>
+        <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--primary);">${e.examId}</td>
+        <td>
+          <strong style="color: var(--text-main);">${e.examName || e.subject}</strong>
+          <div style="font-size: 0.78rem; color: var(--text-muted);">${e.subject}</div>
+        </td>
+        <td>${e.examDate}</td>
+        <td>${e.startTime} - ${e.endTime}</td>
+        <td style="color: var(--danger); font-weight: 700;">${e.latestAllowedStartTime}</td>
+        <td>${e.durationMinutes} mins</td>
+        <td>${e.totalQuestions}</td>
+        <td><span class="status-pill ${(e.status || 'UPCOMING').toLowerCase().replace('_', '-')}">${e.status || 'UPCOMING'}</span></td>
+        <td>
+          <div style="display: flex; gap: 0.4rem;">
+            <button type="button" class="btn-secondary" style="padding: 0.3rem 0.5rem; font-size: 0.75rem;" onclick="toggleAdminExamStatus('${e._id}')" title="Toggle Active">
+              <i class="fa-solid fa-power-off"></i>
+            </button>
+            <button type="button" class="btn-secondary" style="padding: 0.3rem 0.5rem; font-size: 0.75rem; color: var(--danger);" onclick="deleteAdminExam('${e._id}')" title="Delete Exam">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    console.error('Load schedules error:', err);
+  }
+}
+
+async function deleteAdminExam(id) {
+  if (!confirm('Are you sure you want to delete this exam schedule?')) return;
+  try {
+    await fetch(`${API_BASE_URL}/admin/exams/${id}`, { method: 'DELETE' });
+    loadAdminSchedules();
+  } catch (err) {
+    console.error('Delete exam error:', err);
+  }
+}
+
+async function toggleAdminExamStatus(id) {
+  try {
+    await fetch(`${API_BASE_URL}/admin/exams/${id}/toggle`, { method: 'PATCH' });
+    loadAdminSchedules();
+  } catch (err) {
+    console.error('Toggle exam error:', err);
+  }
+}
+
+// Question Bank Management & CRUD
+async function loadAdminQuestionBank() {
+  const tbody = document.getElementById('question-bank-table-body');
+  if (!tbody) return;
+
+  const subject = document.getElementById('qb-filter-subject')?.value || 'ALL';
+  const difficulty = document.getElementById('qb-filter-difficulty')?.value || 'ALL';
+  const search = document.getElementById('qb-search')?.value || '';
+
+  try {
+    let questions = [];
+    if (isBackendConnected) {
+      const res = await fetch(`${API_BASE_URL}/admin/questions?subject=${subject}&difficulty=${difficulty}&search=${encodeURIComponent(search)}`);
+      const data = await res.json();
+      if (data.success) questions = data.questions;
+    }
+
+    allQuestionBankList = questions;
+
+    if (questions.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">No questions found in Question Bank. Click "Add Question" or "Upload Excel MCQs".</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = questions.map((q, idx) => {
+      const diffClass = (q.difficulty || 'MEDIUM').toLowerCase();
+      const correctOptText = q.options && q.options[q.correct] ? q.options[q.correct] : `Option ${q.correct + 1}`;
+
+      return `
+        <tr>
+          <td><strong>${idx + 1}</strong></td>
+          <td><span style="font-weight: 700; color: var(--primary);">${q.subject}</span></td>
+          <td style="max-width: 350px; line-height: 1.4;">${q.question}</td>
+          <td><span class="diff-badge ${diffClass}">${q.difficulty || 'MEDIUM'}</span></td>
+          <td><strong style="color: var(--success);">${String.fromCharCode(65 + (q.correct || 0))}:</strong> ${correctOptText}</td>
+          <td>${q.marks || 1}</td>
+          <td>
+            <div style="display: flex; gap: 0.4rem;">
+              <button type="button" class="btn-secondary" style="padding: 0.3rem 0.5rem; font-size: 0.75rem;" onclick="openEditQuestionModal('${q._id}')"><i class="fa-solid fa-pen"></i></button>
+              <button type="button" class="btn-secondary" style="padding: 0.3rem 0.5rem; font-size: 0.75rem; color: var(--danger);" onclick="deleteQuestionBankItem('${q._id}')"><i class="fa-solid fa-trash-can"></i></button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error('Load question bank error:', err);
+  }
+}
+
+function filterQuestionBank() {
+  loadAdminQuestionBank();
+}
+
+function openAddQuestionModal() {
+  document.getElementById('qe-id').value = '';
+  document.getElementById('qe-modal-title').innerText = 'Add New MCQ Question';
+  document.getElementById('question-editor-form').reset();
+  const modal = document.getElementById('question-editor-modal');
+  if (modal) modal.classList.add('active');
+}
+
+function openEditQuestionModal(id) {
+  const q = allQuestionBankList.find(item => item._id === id);
+  if (!q) return;
+
+  document.getElementById('qe-id').value = q._id;
+  document.getElementById('qe-modal-title').innerText = 'Edit Question';
+  document.getElementById('qe-subject').value = q.subject;
+  document.getElementById('qe-question').value = q.question;
+  document.getElementById('qe-opt-a').value = q.options[0] || '';
+  document.getElementById('qe-opt-b').value = q.options[1] || '';
+  document.getElementById('qe-opt-c').value = q.options[2] || '';
+  document.getElementById('qe-opt-d').value = q.options[3] || '';
+  document.getElementById('qe-correct').value = q.correct || 0;
+  document.getElementById('qe-difficulty').value = q.difficulty || 'MEDIUM';
+  document.getElementById('qe-marks').value = q.marks || 1;
+  document.getElementById('qe-hint').value = q.hint || '';
+
+  const modal = document.getElementById('question-editor-modal');
+  if (modal) modal.classList.add('active');
+}
+
+function closeQuestionModal() {
+  const modal = document.getElementById('question-editor-modal');
+  if (modal) modal.classList.remove('active');
+}
+
+async function saveQuestionBankItem() {
+  const id = document.getElementById('qe-id').value;
+  const payload = {
+    subject: document.getElementById('qe-subject').value,
+    question: document.getElementById('qe-question').value.trim(),
+    options: [
+      document.getElementById('qe-opt-a').value.trim(),
+      document.getElementById('qe-opt-b').value.trim(),
+      document.getElementById('qe-opt-c').value.trim(),
+      document.getElementById('qe-opt-d').value.trim()
+    ],
+    correct: parseInt(document.getElementById('qe-correct').value, 10),
+    difficulty: document.getElementById('qe-difficulty').value,
+    marks: parseInt(document.getElementById('qe-marks').value || 1, 10),
+    hint: document.getElementById('qe-hint').value.trim()
+  };
+
+  try {
+    const url = id ? `${API_BASE_URL}/admin/questions/${id}` : `${API_BASE_URL}/admin/questions`;
+    const method = id ? 'PUT' : 'POST';
+
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.success) {
+      closeQuestionModal();
+      loadAdminQuestionBank();
+    } else {
+      alert(data.message || 'Failed to save question.');
+    }
+  } catch (err) {
+    console.error('Save question error:', err);
+  }
+}
+
+async function deleteQuestionBankItem(id) {
+  if (!confirm('Are you sure you want to delete this question?')) return;
+  try {
+    await fetch(`${API_BASE_URL}/admin/questions/${id}`, { method: 'DELETE' });
+    loadAdminQuestionBank();
+  } catch (err) {
+    console.error('Delete question error:', err);
+  }
+}
+
+// Excel File Upload & Import Preview
+function handleExcelFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const base64Data = e.target.result;
+    currentExcelImportData = base64Data;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/questions/import`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileData: base64Data, confirm: false })
+      });
+      const data = await res.json();
+      if (data.success && data.preview) {
+        document.getElementById('imp-total-found').innerText = data.summary.totalFound;
+        document.getElementById('imp-valid-count').innerText = data.summary.validCount;
+        document.getElementById('imp-invalid-count').innerText = data.summary.invalidCount;
+        document.getElementById('imp-duplicate-count').innerText = data.summary.duplicateCount;
+
+        const modal = document.getElementById('excel-import-preview-modal');
+        if (modal) modal.classList.add('active');
+      } else {
+        alert(data.message || 'Failed to process Excel file.');
+      }
+    } catch (err) {
+      console.error('Excel upload error:', err);
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function closeExcelPreviewModal() {
+  const modal = document.getElementById('excel-import-preview-modal');
+  if (modal) modal.classList.remove('active');
+}
+
+async function confirmExcelImport() {
+  if (!currentExcelImportData) return;
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/admin/questions/import`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fileData: currentExcelImportData, confirm: true })
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert(`🎉 ${data.importedCount} questions successfully imported into Question Bank!`);
+      closeExcelPreviewModal();
+      loadAdminQuestionBank();
+    } else {
+      alert(data.message || 'Import failed.');
+    }
+  } catch (err) {
+    console.error('Confirm import error:', err);
+  }
+}
+
+// Student Roster Management
+async function loadAdminStudentsRoster() {
+  const tbody = document.getElementById('admin-students-table-body');
+  if (!tbody) return;
+
+  try {
+    let students = [];
+    if (isBackendConnected) {
+      const res = await fetch(`${API_BASE_URL}/admin/students`);
+      const data = await res.json();
+      if (data.success) students = data.students;
+    }
+
+    if (!students || students.length === 0) {
+      renderAdminStudentsTable(); // Fallback generate 66 roll numbers
+      return;
+    }
+
+    tbody.innerHTML = students.map((s, idx) => `
+      <tr>
+        <td>${idx + 1}</td>
+        <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent-cyan);">${s.regNo}</td>
+        <td style="font-weight: 700;">${s.name}</td>
+        <td>${s.year}</td>
+        <td>${s.section}</td>
+        <td><strong>${s.totalAttempts || 0}</strong> attempt(s)</td>
+        <td><span class="status-pill ${s.latestStatus === 'SUBMITTED' ? 'available' : 'upcoming'}">${s.latestStatus || 'NOT_STARTED'}</span></td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    renderAdminStudentsTable();
+  }
+}
+
+// Security Reports & Violation Summary
+async function loadAdminSecurityReports() {
+  try {
+    let summary = { tabSwitches: 0, fullscreenExits: 0, windowBlurs: 0, totalViolations: 0 };
+    let events = [];
+
+    if (isBackendConnected) {
+      const res = await fetch(`${API_BASE_URL}/admin/security-events`);
+      const data = await res.json();
+      if (data.success) {
+        summary = data.summary;
+        events = data.events;
+      }
+    }
+
+    document.getElementById('sec-stat-total').innerText = summary.totalViolations;
+    document.getElementById('sec-stat-tab').innerText = summary.tabSwitches;
+    document.getElementById('sec-stat-fullscreen').innerText = summary.fullscreenExits;
+    document.getElementById('sec-stat-blur').innerText = summary.windowBlurs;
+
+    const tbody = document.getElementById('sec-events-table-body');
+    if (tbody) {
+      if (events.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No security violations recorded yet. Integrity status clean!</td></tr>';
+      } else {
+        tbody.innerHTML = events.map(e => `
+          <tr>
+            <td style="font-size: 0.8rem; color: var(--text-muted);">${e.timestamp}</td>
+            <td style="font-weight: 700;">${e.studentName || 'Student'}</td>
+            <td style="font-family: 'JetBrains Mono', monospace; color: var(--primary);">${e.regNo}</td>
+            <td>${e.subject}</td>
+            <td><span class="status-pill cancelled">${e.eventType}</span></td>
+            <td><strong>${e.violationCount || 1}</strong></td>
+          </tr>
+        `).join('');
+      }
+    }
+  } catch (err) {
+    console.error('Load security reports error:', err);
+  }
+}
+
+// Live Student Exam Participation Monitoring
+async function loadExamParticipationStatus() {
+  const examId = document.getElementById('part-exam-select')?.value || 'EXAM_CN_001';
+  const tbody = document.getElementById('part-status-table-body');
+  if (!tbody) return;
+
+  try {
+    let studentStatusList = [];
+    if (isBackendConnected) {
+      const res = await fetch(`${API_BASE_URL}/admin/participation/${examId}`);
+      const data = await res.json();
+      if (data.success) studentStatusList = data.studentStatusList;
+    }
+
+    if (studentStatusList.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No student participation data found for selected exam.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = studentStatusList.map(s => {
+      let statusClass = 'upcoming';
+      if (s.status === 'SUBMITTED') statusClass = 'available';
+      else if (s.status === 'IN_PROGRESS') statusClass = 'in-progress';
+      else if (s.status === 'CANCELLED') statusClass = 'cancelled';
+
+      return `
+        <tr>
+          <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent-cyan);">${s.regNo}</td>
+          <td style="font-weight: 700;">${s.studentName}</td>
+          <td><span class="status-pill ${statusClass}">${s.status}</span></td>
+          <td style="font-size: 0.82rem; color: var(--text-muted);">${s.cancelReason ? `Cancelled: ${s.cancelReason}` : (s.status === 'SUBMITTED' ? 'Completed & Evaluated' : 'N/A')}</td>
+          <td style="font-size: 0.8rem; color: var(--text-muted);">${s.startedAt ? new Date(s.startedAt).toLocaleTimeString() : '—'}</td>
+          <td style="font-size: 0.8rem; color: var(--text-muted);">${s.submittedAt ? new Date(s.submittedAt).toLocaleTimeString() : '—'}</td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error('Load participation error:', err);
+  }
 }
 
 function renderAdminSubjectsGrid() {

@@ -199,9 +199,9 @@
             <label for="student-id" id="login-id-label"><i class="fa-regular fa-id-card"></i> Student Registration ID</label>
             <div class="input-wrapper">
               <i class="fa-solid fa-user"></i>
-              <input type="text" id="student-id" class="input-control" placeholder="Enter Reg No (e.g. 24HPA10501)" required oninput="clearLoginError()">
+              <input type="text" id="student-id" class="input-control" placeholder="Enter Reg No (e.g. 24HP1A0501)" required oninput="clearLoginError()">
             </div>
-            <div class="input-hint-text"><i class="fa-solid fa-circle-info"></i> Allowed: <strong>24HPA10501</strong> to <strong>24HPA10566</strong></div>
+            <div class="input-hint-text"><i class="fa-solid fa-circle-info"></i> Allowed: <strong>24HP1A0501</strong> to <strong>24HP1A0566</strong></div>
           </div>
 
           <div class="form-group">
@@ -237,7 +237,7 @@
         </form>
 
         <div class="demo-hint" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem;">
-          <div><i class="fa-solid fa-user-check"></i> Registered Students: <span>24HPA10501</span> – <span>24HPA10566</span></div>
+          <div><i class="fa-solid fa-user-check"></i> Registered Students: <span>24HP1A0501</span> – <span>24HP1A0566</span></div>
           <button type="button" style="background: none; border: none; color: var(--primary); font-weight: 700; cursor: pointer; text-decoration: underline;" onclick="openAdminModal()">Admin Login</button>
         </div>
       </div>
@@ -525,227 +525,701 @@
     </div>
   </main>
 
-  <!-- PAGE 5: ADMIN DASHBOARD -->
+  <!-- PAGE 5: FACULTY / ADMIN DASHBOARD -->
   <main id="admin-page" class="page-view">
-    <!-- Admin Header Banner -->
-    <div class="result-header" style="margin-bottom: 1.5rem;">
+    <!-- Admin Top Header Banner -->
+    <div class="result-header" style="margin-bottom: 1rem;">
       <div>
         <h2 style="display: flex; align-items: center; gap: 0.6rem;">
-          <i class="fa-solid fa-user-gear" style="color: var(--primary);"></i> Faculty & Admin Control Center
+          <i class="fa-solid fa-user-shield" style="color: var(--primary);"></i> Faculty & Administration Portal
         </h2>
-        <p style="color: var(--text-muted); font-size: 0.88rem;">Andhra Loyola Institute of Engineering and Technology</p>
+        <p style="color: var(--text-muted); font-size: 0.88rem;">Andhra Loyola Institute of Engineering and Technology — Department of CSE</p>
       </div>
 
-      <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+      <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+        <span class="status-pill available" id="admin-role-badge"><i class="fa-solid fa-shield-halved"></i> FACULTY / ADMIN</span>
         <button type="button" class="btn-primary" style="width: auto; background: linear-gradient(135deg, #059669, #10b981);" onclick="downloadMasterExcel()">
-          <i class="fa-solid fa-file-excel"></i> Master Excel File (.xlsx)
+          <i class="fa-solid fa-file-excel"></i> Master Excel (.xlsx)
         </button>
         <button type="button" class="btn-secondary" onclick="loadAdminDashboardData()">
-          <i class="fa-solid fa-rotate"></i> Refresh Data
+          <i class="fa-solid fa-rotate"></i> Refresh
         </button>
-        <button type="button" class="btn-secondary" onclick="showPage('login-page')">
-          <i class="fa-solid fa-right-from-bracket"></i> Exit Admin
+        <button type="button" class="btn-secondary" onclick="handleFacultyLogout()">
+          <i class="fa-solid fa-right-from-bracket"></i> Logout
         </button>
       </div>
     </div>
 
-    <!-- Metrics Cards Overview -->
-    <div class="stats-summary-grid" style="margin-bottom: 1.75rem;">
-      <div class="stat-card">
-        <div class="label">Total Students Roster</div>
-        <div class="value" id="adm-stat-total-students">66</div>
-      </div>
-      <div class="stat-card marks">
-        <div class="label">Total Exam Attempts</div>
-        <div class="value" id="adm-stat-total-attempts">0</div>
-      </div>
-      <div class="stat-card correct">
-        <div class="label">Pass Rate</div>
-        <div class="value" id="adm-stat-pass-rate">100%</div>
-      </div>
-      <div class="stat-card percent">
-        <div class="label">Active Subjects</div>
-        <div class="value" id="adm-stat-total-subjects">4</div>
-      </div>
-    </div>
-
-    <!-- Admin Tabs Header Navigation -->
-    <div class="admin-tabs-nav">
-      <button type="button" class="admin-tab-btn active" id="tab-btn-results" onclick="switchAdminTab('results')">
-        <i class="fa-solid fa-chart-line"></i> Exam Results Database
-      </button>
-      <button type="button" class="admin-tab-btn" id="tab-btn-students" onclick="switchAdminTab('students')">
-        <i class="fa-solid fa-users"></i> Students List (Roster)
-      </button>
-      <button type="button" class="admin-tab-btn" id="tab-btn-subjects" onclick="switchAdminTab('subjects')">
-        <i class="fa-solid fa-book-open"></i> Subjects & Question Bank
-      </button>
-      <button type="button" class="admin-tab-btn" id="tab-btn-schedules" onclick="switchAdminTab('schedules')">
-        <i class="fa-solid fa-calendar-clock"></i> Schedule Exam & Start Policy
-      </button>
-    </div>
-
-    <!-- TAB 1: EXAM RESULTS DATABASE -->
-    <div id="admin-tab-results" class="admin-tab-content active">
-      <div class="glass-card">
-        <div class="table-filter-bar">
-          <div class="input-wrapper" style="flex: 1; max-width: 400px;">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="admin-search-results" class="input-control" placeholder="Search Reg No, Name, or Subject..." onkeyup="filterAdminResultsTable()">
-          </div>
-
-          <div style="display: flex; gap: 0.75rem; align-items: center;">
-            <label style="font-size: 0.83rem; font-weight: 700; color: var(--text-sub);">Filter Status:</label>
-            <select id="admin-filter-status" class="input-control" style="width: 140px; padding: 0.6rem 0.8rem;" onchange="filterAdminResultsTable()">
-              <option value="ALL">All Status</option>
-              <option value="PASS">PASS Only</option>
-              <option value="FAIL">FAIL Only</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="table-responsive">
-          <table class="admin-data-table">
-            <thead>
-              <tr>
-                <th>S.No</th>
-                <th>Reg Number</th>
-                <th>Student Name</th>
-                <th>Subject Paper</th>
-                <th>Marks</th>
-                <th>Percentage</th>
-                <th>Status</th>
-                <th>Submission Date</th>
-              </tr>
-            </thead>
-            <tbody id="admin-results-table-body">
-              <!-- Rendered via JS -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB 2: STUDENTS ROSTER -->
-    <div id="admin-tab-students" class="admin-tab-content" style="display: none;">
-      <div class="glass-card">
-        <div class="table-filter-bar">
-          <div class="input-wrapper" style="flex: 1; max-width: 400px;">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="admin-search-students" class="input-control" placeholder="Search student name or roll number..." onkeyup="filterAdminStudentsTable()">
-          </div>
-          <span style="font-size: 0.83rem; font-weight: 700; color: var(--text-muted);">CSE Section Roll Nos (24HPA10501 - 24HPA10566)</span>
-        </div>
-
-        <div class="table-responsive">
-          <table class="admin-data-table">
-            <thead>
-              <tr>
-                <th>S.No</th>
-                <th>Registration Roll No</th>
-                <th>Student Full Name</th>
-                <th>Year & Program</th>
-                <th>Branch / Section</th>
-                <th>Exam Status</th>
-              </tr>
-            </thead>
-            <tbody id="admin-students-table-body">
-              <!-- Rendered via JS -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB 3: SUBJECTS & QUESTION BANK -->
-    <div id="admin-tab-subjects" class="admin-tab-content" style="display: none;">
-      <div class="subjects-admin-grid" id="admin-subjects-grid">
-        <!-- Rendered via JS -->
-      </div>
-    </div>
-
-    <!-- TAB 4: STRICT EXAM SCHEDULING & LATE START POLICY -->
-    <div id="admin-tab-schedules" class="admin-tab-content" style="display: none;">
-      <div class="glass-card" style="margin-bottom: 1.5rem;">
-        <div class="dashboard-title">
-          <i class="fa-solid fa-calendar-plus"></i> Configure Examination Schedule & Strict Start Window
-        </div>
-        <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.25rem;">
-          Configure strict server-authoritative exam start windows. Students attempting to start after <strong>Latest Allowed Start Time</strong> will be automatically marked as <code>CANCELLED</code> (<code>START_TIME_EXPIRED</code>).
-        </p>
-
-        <form id="admin-schedule-form" onsubmit="event.preventDefault(); handleAdminCreateSchedule();">
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
-            <div class="form-group">
-              <label><i class="fa-solid fa-fingerprint"></i> Exam ID / Code</label>
-              <input type="text" id="sch-exam-id" class="input-control" placeholder="e.g. EXAM_CN_001" value="EXAM_CN_001" required>
-            </div>
-            <div class="form-group">
-              <label><i class="fa-solid fa-book"></i> Subject Paper Name</label>
-              <input type="text" id="sch-subject" class="input-control" placeholder="e.g. Computer Networks" value="Computer Networks" required>
-            </div>
-            <div class="form-group">
-              <label><i class="fa-solid fa-calendar-day"></i> Exam Date</label>
-              <input type="date" id="sch-date" class="input-control" required>
-            </div>
-            <div class="form-group">
-              <label><i class="fa-solid fa-clock"></i> Scheduled Start Time</label>
-              <input type="text" id="sch-start-time" class="input-control" placeholder="e.g. 10:00 AM" value="10:00 AM" required>
-            </div>
-            <div class="form-group">
-              <label style="color: var(--danger);"><i class="fa-solid fa-user-clock"></i> Latest Allowed Start Time</label>
-              <input type="text" id="sch-latest-start" class="input-control" placeholder="e.g. 10:05 AM" value="10:05 AM" required>
-            </div>
-            <div class="form-group">
-              <label><i class="fa-solid fa-hourglass-end"></i> Exam End Time</label>
-              <input type="text" id="sch-end-time" class="input-control" placeholder="e.g. 10:35 AM" value="10:35 AM" required>
-            </div>
-            <div class="form-group">
-              <label><i class="fa-solid fa-stopwatch"></i> Exam Duration (Minutes)</label>
-              <input type="number" id="sch-duration" class="input-control" value="30" min="5" max="180" required>
+    <!-- Admin Dashboard Main Layout with Sidebar -->
+    <div class="admin-layout-container">
+      <!-- Left Sidebar Navigation -->
+      <aside class="admin-sidebar">
+        <div>
+          <div class="admin-sidebar-brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            <div>
+              <strong>Faculty Admin</strong>
+              <span>Control Panel v2.5</span>
             </div>
           </div>
 
-          <button type="submit" class="btn-primary">
-            <i class="fa-solid fa-floppy-disk"></i> Save & Publish Exam Schedule Policy
+          <div class="admin-nav-list">
+            <button type="button" class="admin-nav-item active" id="nav-btn-summary" onclick="switchAdminSection('summary')">
+              <i class="fa-solid fa-chart-pie"></i> Dashboard Home
+            </button>
+            <button type="button" class="admin-nav-item" id="nav-btn-create-exam" onclick="switchAdminSection('create-exam')">
+              <i class="fa-solid fa-pen-to-square"></i> Create Examination
+            </button>
+            <button type="button" class="admin-nav-item" id="nav-btn-schedules" onclick="switchAdminSection('schedules')">
+              <i class="fa-solid fa-calendar-days"></i> Exam Schedule
+            </button>
+            <button type="button" class="admin-nav-item" id="nav-btn-questions" onclick="switchAdminSection('questions')">
+              <i class="fa-solid fa-file-lines"></i> Question Bank & Excel
+            </button>
+            <button type="button" class="admin-nav-item" id="nav-btn-students" onclick="switchAdminSection('students')">
+              <i class="fa-solid fa-users-gear"></i> Student Roster
+            </button>
+            <button type="button" class="admin-nav-item" id="nav-btn-results" onclick="switchAdminSection('results')">
+              <i class="fa-solid fa-trophy"></i> Results Database
+            </button>
+            <button type="button" class="admin-nav-item" id="nav-btn-security" onclick="switchAdminSection('security')">
+              <i class="fa-solid fa-shield-virus"></i> Security Reports
+            </button>
+            <button type="button" class="admin-nav-item" id="nav-btn-participation" onclick="switchAdminSection('participation')">
+              <i class="fa-solid fa-user-clock"></i> Participation Monitor
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <button type="button" class="admin-nav-item logout-btn" onclick="handleFacultyLogout()">
+            <i class="fa-solid fa-right-from-bracket"></i> Exit Dashboard
           </button>
-        </form>
-      </div>
+        </div>
+      </aside>
 
-      <!-- Live Active Schedules List -->
-      <div class="glass-card">
-        <div class="dashboard-title">
-          <i class="fa-solid fa-list-check"></i> Published Examination Schedules Overview
-        </div>
-        <div id="admin-schedules-list-container">
-          <!-- Rendered via JS -->
-        </div>
-      </div>
+      <!-- Right Main Content Area -->
+      <main class="admin-main-view">
+        <!-- PANE 1: DASHBOARD SUMMARY CARDS & RECENT ACTIVITY -->
+        <section id="pane-summary" class="admin-section-pane active">
+          <!-- Summary Cards Grid -->
+          <div class="admin-summary-grid">
+            <div class="admin-kpi-card">
+              <div class="admin-kpi-icon blue"><i class="fa-solid fa-users"></i></div>
+              <div class="admin-kpi-content">
+                <div class="admin-kpi-value" id="kpi-total-students">66</div>
+                <div class="admin-kpi-label">Total Students</div>
+              </div>
+            </div>
+
+            <div class="admin-kpi-card">
+              <div class="admin-kpi-icon purple"><i class="fa-solid fa-book-bookmark"></i></div>
+              <div class="admin-kpi-content">
+                <div class="admin-kpi-value" id="kpi-total-exams">0</div>
+                <div class="admin-kpi-label">Total Exams</div>
+              </div>
+            </div>
+
+            <div class="admin-kpi-card">
+              <div class="admin-kpi-icon emerald"><i class="fa-solid fa-calendar-check"></i></div>
+              <div class="admin-kpi-content">
+                <div class="admin-kpi-value" id="kpi-today-exams">0</div>
+                <div class="admin-kpi-label">Today's Exams</div>
+              </div>
+            </div>
+
+            <div class="admin-kpi-card">
+              <div class="admin-kpi-icon indigo"><i class="fa-solid fa-clock-rotate-left"></i></div>
+              <div class="admin-kpi-content">
+                <div class="admin-kpi-value" id="kpi-upcoming-exams">0</div>
+                <div class="admin-kpi-label">Upcoming Exams</div>
+              </div>
+            </div>
+
+            <div class="admin-kpi-card">
+              <div class="admin-kpi-icon amber"><i class="fa-solid fa-circle-check"></i></div>
+              <div class="admin-kpi-content">
+                <div class="admin-kpi-value" id="kpi-completed-exams">0</div>
+                <div class="admin-kpi-label">Completed Exams</div>
+              </div>
+            </div>
+
+            <div class="admin-kpi-card">
+              <div class="admin-kpi-icon rose"><i class="fa-solid fa-triangle-exclamation"></i></div>
+              <div class="admin-kpi-content">
+                <div class="admin-kpi-value" id="kpi-total-violations">0</div>
+                <div class="admin-kpi-label">Security Violations</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Overview & Recent Activity Feed -->
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+            <div class="glass-card">
+              <div class="dashboard-title"><i class="fa-solid fa-bolt"></i> Quick Exam Status Overview</div>
+              <div id="admin-quick-schedule-preview">
+                <div style="padding: 1.5rem; text-align: center; color: var(--text-muted);">Loading active examinations...</div>
+              </div>
+            </div>
+
+            <div class="glass-card">
+              <div class="dashboard-title"><i class="fa-solid fa-list-ul"></i> Recent Activity</div>
+              <div class="activity-timeline" id="admin-recent-activity-list">
+                <div class="activity-item">
+                  <i class="fa-solid fa-circle-info"></i>
+                  <div>New exam created: Computer Networks</div>
+                  <div class="activity-time">Just now</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PANE 2: CREATE EXAMINATION -->
+        <section id="pane-create-exam" class="admin-section-pane">
+          <div class="glass-card">
+            <div class="dashboard-title"><i class="fa-solid fa-folder-plus"></i> Create & Publish New Examination</div>
+            <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.25rem;">
+              Set examination rules, timing boundaries, passing criteria, and difficulty distribution (Easy + Medium + Hard = Total Questions).
+            </p>
+
+            <form id="admin-create-exam-form" onsubmit="event.preventDefault(); handleAdminSubmitCreateExam();">
+              <div class="admin-form-grid">
+                <div class="form-group">
+                  <label><i class="fa-solid fa-file-signature"></i> Examination Name</label>
+                  <input type="text" id="ce-exam-name" class="input-control" placeholder="e.g. Mid-Term Computer Networks Exam" required>
+                </div>
+
+                <div class="form-group">
+                  <label><i class="fa-solid fa-book-open"></i> Subject / Question Bank</label>
+                  <select id="ce-subject" class="input-control" required>
+                    <option value="Computer Networks">Computer Networks</option>
+                    <option value="Quantum Computing">Quantum Computing</option>
+                    <option value="Finite Automata">Finite Automata</option>
+                    <option value="Data Warehouse and Data Mining">Data Warehouse and Data Mining</option>
+                    <option value="Fundamentals of Computing">Fundamentals of Computing</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label><i class="fa-solid fa-calendar-day"></i> Examination Date</label>
+                  <input type="date" id="ce-exam-date" class="input-control" required>
+                </div>
+
+                <div class="form-group">
+                  <label><i class="fa-solid fa-clock"></i> Scheduled Start Time</label>
+                  <input type="text" id="ce-start-time" class="input-control" placeholder="e.g. 10:00 AM" value="10:00 AM" required>
+                </div>
+
+                <div class="form-group">
+                  <label style="color: var(--danger);"><i class="fa-solid fa-user-clock"></i> Latest Allowed Start Time</label>
+                  <input type="text" id="ce-latest-start-time" class="input-control" placeholder="e.g. 10:05 AM" value="10:05 AM" required>
+                </div>
+
+                <div class="form-group">
+                  <label><i class="fa-solid fa-hourglass-end"></i> Examination End Time</label>
+                  <input type="text" id="ce-end-time" class="input-control" placeholder="e.g. 10:35 AM" value="10:35 AM" required>
+                </div>
+
+                <div class="form-group">
+                  <label><i class="fa-solid fa-stopwatch"></i> Duration (Minutes)</label>
+                  <input type="number" id="ce-duration" class="input-control" value="30" min="5" max="180" required>
+                </div>
+
+                <div class="form-group">
+                  <label><i class="fa-solid fa-list-ol"></i> Total Questions</label>
+                  <input type="number" id="ce-total-questions" class="input-control" value="20" min="1" max="100" required onchange="validateDifficultySum()">
+                </div>
+
+                <div class="form-group">
+                  <label><i class="fa-solid fa-award"></i> Marks per Question</label>
+                  <input type="number" id="ce-marks-per-q" class="input-control" value="1" min="1" max="10" required>
+                </div>
+
+                <div class="form-group">
+                  <label><i class="fa-solid fa-percent"></i> Passing Percentage (%)</label>
+                  <input type="number" id="ce-passing-pct" class="input-control" value="40" min="1" max="100" required>
+                </div>
+              </div>
+
+              <!-- Difficulty Distribution Settings -->
+              <div style="margin-top: 1.5rem; border-top: 1px solid var(--border-glass); padding-top: 1.25rem;">
+                <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-main);">
+                  <i class="fa-solid fa-layer-group"></i> Difficulty-Based Question Distribution (Optional)
+                </h4>
+                <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem;">
+                  Specify how many questions of each difficulty level should be selected. Sum MUST equal Total Questions (<span id="ce-sum-target">20</span>).
+                </p>
+
+                <div class="admin-form-grid">
+                  <div class="diff-counter-box">
+                    <span class="diff-badge easy">EASY</span>
+                    <input type="number" id="ce-easy-count" class="input-control" style="width: 80px;" value="5" min="0" onchange="validateDifficultySum()">
+                  </div>
+
+                  <div class="diff-counter-box">
+                    <span class="diff-badge medium">MEDIUM</span>
+                    <input type="number" id="ce-medium-count" class="input-control" style="width: 80px;" value="10" min="0" onchange="validateDifficultySum()">
+                  </div>
+
+                  <div class="diff-counter-box">
+                    <span class="diff-badge hard">HARD</span>
+                    <input type="number" id="ce-hard-count" class="input-control" style="width: 80px;" value="5" min="0" onchange="validateDifficultySum()">
+                  </div>
+                </div>
+
+                <div id="ce-diff-validation-msg" style="margin-top: 0.75rem; font-size: 0.85rem; font-weight: 700; color: var(--success);">
+                  ✓ Easy (5) + Medium (10) + Hard (5) = 20 total questions.
+                </div>
+              </div>
+
+              <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;">
+                <button type="button" class="btn-secondary" onclick="switchAdminSection('schedules')">Cancel</button>
+                <button type="submit" class="btn-primary" style="width: auto;">
+                  <i class="fa-solid fa-paper-plane"></i> Publish Examination Schedule
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- PANE 3: EXAM SCHEDULE -->
+        <section id="pane-schedules" class="admin-section-pane">
+          <div class="glass-card">
+            <div class="table-filter-bar">
+              <div class="dashboard-title" style="margin-bottom: 0;">
+                <i class="fa-solid fa-calendar-check"></i> Scheduled Examinations List
+              </div>
+              <button type="button" class="btn-primary" style="width: auto;" onclick="switchAdminSection('create-exam')">
+                <i class="fa-solid fa-plus"></i> Create New Exam
+              </button>
+            </div>
+
+            <div class="table-responsive" style="margin-top: 1.25rem;">
+              <table class="admin-data-table">
+                <thead>
+                  <tr>
+                    <th>Exam ID</th>
+                    <th>Exam Name / Subject</th>
+                    <th>Date</th>
+                    <th>Window (Start - End)</th>
+                    <th>Latest Start</th>
+                    <th>Duration</th>
+                    <th>Q's</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-schedule-table-body">
+                  <!-- Rendered via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- PANE 4: QUESTION BANK & EXCEL IMPORT -->
+        <section id="pane-questions" class="admin-section-pane">
+          <div class="glass-card" style="margin-bottom: 1.5rem;">
+            <div class="table-filter-bar">
+              <div style="display: flex; gap: 1rem; align-items: center; flex: 1; flex-wrap: wrap;">
+                <div class="input-wrapper" style="flex: 1; max-width: 300px;">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="qb-search" class="input-control" placeholder="Search questions..." onkeyup="filterQuestionBank()">
+                </div>
+
+                <select id="qb-filter-subject" class="input-control" style="width: 200px;" onchange="filterQuestionBank()">
+                  <option value="ALL">All Subjects</option>
+                  <option value="Computer Networks">Computer Networks</option>
+                  <option value="Quantum Computing">Quantum Computing</option>
+                  <option value="Finite Automata">Finite Automata</option>
+                  <option value="Data Warehouse and Data Mining">Data Warehouse and Data Mining</option>
+                  <option value="Fundamentals of Computing">Fundamentals of Computing</option>
+                </select>
+
+                <select id="qb-filter-difficulty" class="input-control" style="width: 150px;" onchange="filterQuestionBank()">
+                  <option value="ALL">All Difficulty</option>
+                  <option value="EASY">Easy</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="HARD">Hard</option>
+                </select>
+              </div>
+
+              <div style="display: flex; gap: 0.75rem;">
+                <button type="button" class="btn-secondary" onclick="openAddQuestionModal()">
+                  <i class="fa-solid fa-plus"></i> Add Question
+                </button>
+                <button type="button" class="btn-primary" style="width: auto; background: linear-gradient(135deg, #10b981, #059669);" onclick="document.getElementById('excel-file-input').click()">
+                  <i class="fa-solid fa-file-excel"></i> Upload Excel MCQs
+                </button>
+                <input type="file" id="excel-file-input" accept=".xlsx, .xls" style="display: none;" onchange="handleExcelFileUpload(event)">
+              </div>
+            </div>
+          </div>
+
+          <!-- Question Bank Table -->
+          <div class="glass-card">
+            <div class="table-responsive">
+              <table class="admin-data-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Subject</th>
+                    <th>Question</th>
+                    <th>Difficulty</th>
+                    <th>Correct Opt</th>
+                    <th>Marks</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="question-bank-table-body">
+                  <!-- Rendered via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- PANE 5: STUDENT ROSTER -->
+        <section id="pane-students" class="admin-section-pane">
+          <div class="glass-card">
+            <div class="table-filter-bar">
+              <div class="input-wrapper" style="flex: 1; max-width: 400px;">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="admin-search-students" class="input-control" placeholder="Search student name or roll number..." onkeyup="filterAdminStudentsTable()">
+              </div>
+              <span style="font-size: 0.83rem; font-weight: 700; color: var(--text-muted);">CSE Section Roll Nos (24HP1A0501 - 24HP1A0566)</span>
+            </div>
+
+            <div class="table-responsive">
+              <table class="admin-data-table">
+                <thead>
+                  <tr>
+                    <th>S.No</th>
+                    <th>Registration Roll No</th>
+                    <th>Student Full Name</th>
+                    <th>Year & Program</th>
+                    <th>Section</th>
+                    <th>Total Attempts</th>
+                    <th>Exam Status</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-students-table-body">
+                  <!-- Rendered via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- PANE 6: RESULTS DATABASE -->
+        <section id="pane-results" class="admin-section-pane">
+          <div class="glass-card">
+            <div class="table-filter-bar">
+              <div class="input-wrapper" style="flex: 1; max-width: 400px;">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="admin-search-results" class="input-control" placeholder="Search Reg No, Name, or Subject..." onkeyup="filterAdminResultsTable()">
+              </div>
+
+              <div style="display: flex; gap: 0.75rem; align-items: center;">
+                <label style="font-size: 0.83rem; font-weight: 700; color: var(--text-sub);">Filter Status:</label>
+                <select id="admin-filter-status" class="input-control" style="width: 140px;" onchange="filterAdminResultsTable()">
+                  <option value="ALL">All Status</option>
+                  <option value="PASS">PASS Only</option>
+                  <option value="FAIL">FAIL Only</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="admin-data-table">
+                <thead>
+                  <tr>
+                    <th>S.No</th>
+                    <th>Reg Number</th>
+                    <th>Student Name</th>
+                    <th>Subject Paper</th>
+                    <th>Marks</th>
+                    <th>Percentage</th>
+                    <th>Status</th>
+                    <th>Submission Date</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-results-table-body">
+                  <!-- Rendered via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- PANE 7: SECURITY REPORTS -->
+        <section id="pane-security" class="admin-section-pane">
+          <!-- Security KPI Breakdown -->
+          <div class="admin-summary-grid">
+            <div class="admin-kpi-card">
+              <div class="admin-kpi-icon rose"><i class="fa-solid fa-shield-virus"></i></div>
+              <div class="admin-kpi-content">
+                <div class="admin-kpi-value" id="sec-stat-total">0</div>
+                <div class="admin-kpi-label">Total Security Events</div>
+              </div>
+            </div>
+
+            <div class="admin-kpi-card">
+              <div class="admin-kpi-icon amber"><i class="fa-solid fa-window-restore"></i></div>
+              <div class="admin-kpi-content">
+                <div class="admin-kpi-value" id="sec-stat-tab">0</div>
+                <div class="admin-kpi-label">Tab Switches</div>
+              </div>
+            </div>
+
+            <div class="admin-kpi-card">
+              <div class="admin-kpi-icon purple"><i class="fa-solid fa-compress"></i></div>
+              <div class="admin-kpi-content">
+                <div class="admin-kpi-value" id="sec-stat-fullscreen">0</div>
+                <div class="admin-kpi-label">Fullscreen Exits</div>
+              </div>
+            </div>
+
+            <div class="admin-kpi-card">
+              <div class="admin-kpi-icon blue"><i class="fa-solid fa-eye-slash"></i></div>
+              <div class="admin-kpi-content">
+                <div class="admin-kpi-value" id="sec-stat-blur">0</div>
+                <div class="admin-kpi-label">Window Blurs</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Security Violation Logs Table -->
+          <div class="glass-card">
+            <div class="dashboard-title"><i class="fa-solid fa-list-check"></i> Security Violation Event Log</div>
+            <div class="table-responsive">
+              <table class="admin-data-table">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Student Name</th>
+                    <th>Roll Number</th>
+                    <th>Exam Subject</th>
+                    <th>Violation Event</th>
+                    <th>Count</th>
+                  </tr>
+                </thead>
+                <tbody id="sec-events-table-body">
+                  <!-- Rendered via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- PANE 8: PARTICIPATION MONITORING -->
+        <section id="pane-participation" class="admin-section-pane">
+          <div class="glass-card">
+            <div class="table-filter-bar">
+              <div class="dashboard-title" style="margin-bottom: 0;">
+                <i class="fa-solid fa-users-viewfinder"></i> Live Student Exam Status Monitor
+              </div>
+
+              <select id="part-exam-select" class="input-control" style="width: 260px;" onchange="loadExamParticipationStatus()">
+                <option value="EXAM_CN_001">Computer Networks</option>
+                <option value="EXAM_QC_002">Quantum Computing</option>
+              </select>
+            </div>
+
+            <div class="table-responsive" style="margin-top: 1.25rem;">
+              <table class="admin-data-table">
+                <thead>
+                  <tr>
+                    <th>Roll Number</th>
+                    <th>Student Name</th>
+                    <th>Current Status</th>
+                    <th>Reason / Details</th>
+                    <th>Started Timestamp</th>
+                    <th>Submitted Timestamp</th>
+                  </tr>
+                </thead>
+                <tbody id="part-status-table-body">
+                  <!-- Rendered via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
   </main>
 
-  <!-- Admin Login Modal -->
+  <!-- FACULTY ADMIN AUTHENTICATION MODAL -->
   <div class="modal-overlay" id="admin-auth-modal">
-    <div class="modal-content">
-      <div style="font-size: 2.5rem; color: var(--primary); margin-bottom: 0.75rem;">
-        <i class="fa-solid fa-user-gear"></i>
+    <div class="modal-content" style="max-width: 440px;">
+      <div style="font-size: 2.5rem; color: var(--primary); margin-bottom: 0.75rem; text-align: center;">
+        <i class="fa-solid fa-user-shield"></i>
       </div>
-      <h3>Faculty Admin Access</h3>
-      <p>Enter Administrator Passkey (Default: <strong>admin123</strong>)</p>
+      <h3 style="text-align: center; margin-bottom: 0.25rem;">Faculty / Admin Login</h3>
+      <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;">
+        Default Faculty ID: <strong>FACULTY01</strong> | Password: <strong>admin123</strong>
+      </p>
 
-      <form onsubmit="event.preventDefault(); verifyAdminPasskey();">
-        <div class="form-group" style="margin-bottom: 1.5rem;">
+      <form onsubmit="event.preventDefault(); handleFacultyLogin();">
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label><i class="fa-solid fa-id-badge"></i> Faculty / Admin ID</label>
           <div class="input-wrapper">
-            <i class="fa-solid fa-key"></i>
-            <input type="password" id="admin-passkey-input" class="input-control" value="admin123" placeholder="Enter Admin Passkey" required>
+            <i class="fa-solid fa-user"></i>
+            <input type="text" id="faculty-id-input" class="input-control" value="FACULTY01" placeholder="Enter Faculty ID (e.g. FACULTY01)" required>
           </div>
         </div>
 
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label><i class="fa-solid fa-key"></i> Password</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-lock"></i>
+            <input type="password" id="faculty-pass-input" class="input-control" value="admin123" placeholder="Enter Password" required>
+          </div>
+        </div>
+
+        <div id="faculty-login-error" style="color: var(--danger); font-size: 0.85rem; font-weight: 700; margin-bottom: 1rem; display: none;"></div>
+
         <div class="modal-buttons">
           <button type="button" class="btn-secondary" style="flex: 1;" onclick="closeAdminModal()">Cancel</button>
-          <button type="submit" class="btn-primary" style="flex: 1;">Unlock Portal</button>
+          <button type="submit" class="btn-primary" style="flex: 1;"><i class="fa-solid fa-right-to-bracket"></i> Login Dashboard</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ADD / EDIT QUESTION MODAL -->
+  <div class="modal-overlay" id="question-editor-modal">
+    <div class="modal-content" style="max-width: 600px;">
+      <div style="font-size: 2rem; color: var(--primary); margin-bottom: 0.5rem;">
+        <i class="fa-solid fa-circle-question"></i>
+      </div>
+      <h3 id="qe-modal-title">Add New Question</h3>
+
+      <form id="question-editor-form" onsubmit="event.preventDefault(); saveQuestionBankItem();">
+        <input type="hidden" id="qe-id">
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label>Subject Paper</label>
+          <select id="qe-subject" class="input-control" required>
+            <option value="Computer Networks">Computer Networks</option>
+            <option value="Quantum Computing">Quantum Computing</option>
+            <option value="Finite Automata">Finite Automata</option>
+            <option value="Data Warehouse and Data Mining">Data Warehouse and Data Mining</option>
+            <option value="Fundamentals of Computing">Fundamentals of Computing</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label>Question Text</label>
+          <textarea id="qe-question" class="input-control" rows="3" placeholder="Enter question description..." required></textarea>
+        </div>
+
+        <div class="admin-form-grid" style="margin-bottom: 1rem;">
+          <div class="form-group">
+            <label>Option A</label>
+            <input type="text" id="qe-opt-a" class="input-control" placeholder="Option A" required>
+          </div>
+          <div class="form-group">
+            <label>Option B</label>
+            <input type="text" id="qe-opt-b" class="input-control" placeholder="Option B" required>
+          </div>
+          <div class="form-group">
+            <label>Option C</label>
+            <input type="text" id="qe-opt-c" class="input-control" placeholder="Option C" required>
+          </div>
+          <div class="form-group">
+            <label>Option D</label>
+            <input type="text" id="qe-opt-d" class="input-control" placeholder="Option D" required>
+          </div>
+        </div>
+
+        <div class="admin-form-grid" style="margin-bottom: 1rem;">
+          <div class="form-group">
+            <label>Correct Option</label>
+            <select id="qe-correct" class="input-control" required>
+              <option value="0">Option A</option>
+              <option value="1">Option B</option>
+              <option value="2">Option C</option>
+              <option value="3">Option D</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Difficulty Level</label>
+            <select id="qe-difficulty" class="input-control" required>
+              <option value="EASY">EASY</option>
+              <option value="MEDIUM" selected>MEDIUM</option>
+              <option value="HARD">HARD</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Marks</label>
+            <input type="number" id="qe-marks" class="input-control" value="1" min="1" max="10" required>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label>Hint (Optional)</label>
+          <input type="text" id="qe-hint" class="input-control" placeholder="Enter hint for student...">
+        </div>
+
+        <div class="modal-buttons">
+          <button type="button" class="btn-secondary" style="flex: 1;" onclick="closeQuestionModal()">Cancel</button>
+          <button type="submit" class="btn-primary" style="flex: 1;"><i class="fa-solid fa-floppy-disk"></i> Save Question</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- EXCEL MCQ IMPORT PREVIEW MODAL -->
+  <div class="modal-overlay" id="excel-import-preview-modal">
+    <div class="modal-content" style="max-width: 550px;">
+      <div style="font-size: 2.5rem; color: #10b981; margin-bottom: 0.75rem; text-align: center;">
+        <i class="fa-solid fa-file-excel"></i>
+      </div>
+      <h3 style="text-align: center;">Excel MCQ Import Preview</h3>
+      <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;">
+        Review validation results before importing questions into MongoDB.
+      </p>
+
+      <div class="admin-summary-grid" style="margin-bottom: 1.25rem;">
+        <div class="admin-kpi-card">
+          <div class="admin-kpi-content">
+            <div class="admin-kpi-value" id="imp-total-found">0</div>
+            <div class="admin-kpi-label">Found</div>
+          </div>
+        </div>
+
+        <div class="admin-kpi-card">
+          <div class="admin-kpi-content">
+            <div class="admin-kpi-value" id="imp-valid-count" style="color: var(--success);">0</div>
+            <div class="admin-kpi-label">Valid</div>
+          </div>
+        </div>
+
+        <div class="admin-kpi-card">
+          <div class="admin-kpi-content">
+            <div class="admin-kpi-value" id="imp-invalid-count" style="color: var(--danger);">0</div>
+            <div class="admin-kpi-label">Invalid</div>
+          </div>
+        </div>
+
+        <div class="admin-kpi-card">
+          <div class="admin-kpi-content">
+            <div class="admin-kpi-value" id="imp-duplicate-count" style="color: var(--warning);">0</div>
+            <div class="admin-kpi-label">Duplicates</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-buttons">
+        <button type="button" class="btn-secondary" style="flex: 1;" onclick="closeExcelPreviewModal()">Cancel</button>
+        <button type="button" class="btn-primary" style="flex: 1; background: linear-gradient(135deg, #10b981, #059669);" onclick="confirmExcelImport()">
+          <i class="fa-solid fa-cloud-arrow-up"></i> Import Valid Questions
+        </button>
+      </div>
     </div>
   </div>
 
