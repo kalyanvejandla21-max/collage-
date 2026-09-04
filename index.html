@@ -118,6 +118,21 @@
 
       </div>
 
+      <!-- Live Image Subtitle Labels Container -->
+      <div class="intro-labels-container">
+        <span class="stage-label label-aliet-logo"><i class="fa-solid fa-graduation-cap"></i> ALIET CAMPUS</span>
+        <span class="stage-label label-education"><i class="fa-solid fa-book-bookmark"></i> EDUCATION &amp; ACADEMICS</span>
+        <span class="stage-label label-research"><i class="fa-solid fa-microscope"></i> RESEARCH &amp; INNOVATION</span>
+        <span class="stage-label label-science"><i class="fa-solid fa-atom"></i> SCIENCE &amp; TECHNOLOGY</span>
+        <span class="stage-label label-community"><i class="fa-solid fa-hand-holding-heart"></i> COMMUNITY &amp; SERVICE</span>
+        <span class="stage-label label-exam"><i class="fa-solid fa-laptop-code"></i> ONLINE EXAMINATIONS</span>
+        <span class="stage-label label-random"><i class="fa-solid fa-shuffle"></i> RANDOMIZED QUESTION BANK</span>
+        <span class="stage-label label-security"><i class="fa-solid fa-shield-halved"></i> EXAM SECURITY &amp; PROCTORING</span>
+        <span class="stage-label label-faith"><i class="fa-solid fa-church"></i> FAITH &amp; INTEGRITY</span>
+        <span class="stage-label label-service"><i class="fa-solid fa-hands-holding-child"></i> SOCIAL SERVICE</span>
+        <span class="stage-label label-excellence"><i class="fa-solid fa-award"></i> ACADEMIC EXCELLENCE</span>
+      </div>
+
       <!-- Typography Container -->
       <div class="intro-text-container">
         <!-- Initial College Name (Stage 1) -->
@@ -147,9 +162,15 @@
       </div>
       <div class="header-right-group">
         <div class="user-badge" id="header-user-badge" style="display: none; cursor: pointer;" onclick="handleLogout()" title="Click to Logout">
-          <div class="avatar" id="avatar-initials">K</div>
+          <div class="avatar-frame">
+            <img id="header-student-photo" src="" alt="Student Photo" class="header-user-photo" style="display: none;" onerror="this.style.display='none'; document.getElementById('avatar-initials').style.display='flex';">
+            <div class="avatar" id="avatar-initials">K</div>
+          </div>
           <div class="user-info">
-            <div class="user-name" id="header-student-name">Kalyan</div>
+            <div class="user-name-wrapper">
+              <span class="user-name" id="header-student-name">Kalyan</span>
+              <span class="user-dept-badge" id="header-student-dept">CSE</span>
+            </div>
             <div class="user-reg" id="header-student-reg">23A91A0501</div>
           </div>
         </div>
@@ -201,7 +222,7 @@
               <i class="fa-solid fa-user"></i>
               <input type="text" id="student-id" class="input-control" placeholder="Enter Reg No (e.g. 24HP1A0501)" required oninput="clearLoginError()">
             </div>
-            <div class="input-hint-text"><i class="fa-solid fa-circle-info"></i> Allowed: <strong>24HP1A0501</strong> to <strong>24HP1A0566</strong></div>
+            <div class="input-hint-text"><i class="fa-solid fa-circle-info"></i> Enter your registered <strong>Hall Ticket Number</strong> (e.g., 24HP1A0541, 24HP1A4401)</div>
           </div>
 
           <div class="form-group">
@@ -237,7 +258,7 @@
         </form>
 
         <div class="demo-hint" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem;">
-          <div><i class="fa-solid fa-user-check"></i> Registered Students: <span>24HP1A0501</span> – <span>24HP1A0566</span></div>
+          <div><i class="fa-solid fa-user-check"></i> Master Student Database: <strong>800+ Verified Records</strong></div>
           <button type="button" style="background: none; border: none; color: var(--primary); font-weight: 700; cursor: pointer; text-decoration: underline;" onclick="openAdminModal()">Admin Login</button>
         </div>
       </div>
@@ -263,12 +284,12 @@
               <td id="dash-reg-no">23A91A0501</td>
             </tr>
             <tr>
-              <td>Year / Program</td>
-              <td>III B.Tech (CSE)</td>
+              <td>Year / Semester</td>
+              <td id="dash-student-year">Year 3 • Semester 1</td>
             </tr>
             <tr>
-              <td>Section / Branch</td>
-              <td>A - Computer Science</td>
+              <td>Department & Section</td>
+              <td id="dash-student-sec">CSE - Section A</td>
             </tr>
             <tr>
               <td>Examination</td>
@@ -345,17 +366,7 @@
         </div>
       </div>
 
-        <!-- Exam Security Live Status Bar -->
-        <div class="exam-security-bar" id="exam-security-bar">
-          <div class="sec-indicator-pill active" id="fullscreen-status-pill">
-            <i class="fa-solid fa-lock"></i> <span>🔒 Fullscreen Exam Mode</span>
-          </div>
-          <div class="sec-metrics-group">
-            <span class="sec-badge" id="sec-badge-fs-exits"><i class="fa-solid fa-compress"></i> Fullscreen Exits: <strong id="fs-exit-count-display">0</strong></span>
-            <span class="sec-badge" id="sec-badge-tab-switches"><i class="fa-solid fa-window-restore"></i> Tab Switches: <strong id="tab-switch-count-display">0</strong></span>
-            <span class="sec-badge warning-pill" id="sec-badge-violations"><i class="fa-solid fa-triangle-exclamation"></i> Violations: <strong id="violations-count-display">0</strong> / <span id="max-violations-display">3</span></span>
-          </div>
-        </div>
+
 
       <!-- Live Exam Completion Progress Bar -->
       <div class="exam-progress-wrapper" title="Exam Progress">
@@ -370,7 +381,10 @@
         <div>
           <div class="question-header">
             <div class="q-number" id="q-number-display">Question 1 of 20</div>
-            <div class="q-marks">+1.0 Mark</div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <div class="q-diff-badge easy" id="q-difficulty-badge">Difficulty: EASY</div>
+              <div class="q-marks-badge" id="q-marks-badge">Marks: 1</div>
+            </div>
           </div>
 
           <div class="q-body" id="q-text-display">
@@ -379,6 +393,12 @@
 
           <div class="options-list" id="q-options-container">
             <!-- Options rendered dynamically -->
+          </div>
+
+          <!-- Hint Display Container -->
+          <div id="q-hint-box" class="hint-display-box" style="display: none;">
+            <i class="fa-solid fa-lightbulb" style="color: var(--warning);"></i>
+            <strong>Hint:</strong> <span id="q-hint-text"></span>
           </div>
         </div>
 
@@ -394,6 +414,9 @@
           </div>
 
           <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button type="button" class="btn-hint" id="hint-btn" onclick="promptUseHint()">
+              <i class="fa-solid fa-lightbulb"></i> [ USE HINT ]
+            </button>
             <button type="button" class="btn-review" id="review-btn" onclick="toggleMarkForReview()">
               <i class="fa-regular fa-bookmark"></i> Mark for Review
             </button>
@@ -414,6 +437,9 @@
             <div class="legend-item"><span class="dot review"></span> Marked Review</div>
             <div class="legend-item"><span class="dot current"></span> Current</div>
             <div class="legend-item"><span class="dot unvisited"></span> Unvisited</div>
+            <div class="legend-item"><span class="dot easy-dot"></span> 🟢 Easy (1M)</div>
+            <div class="legend-item"><span class="dot medium-dot"></span> 🟡 Medium (2M)</div>
+            <div class="legend-item"><span class="dot hard-dot"></span> 🔴 Hard (2M)</div>
           </div>
 
           <!-- 20 Grid Pills -->
@@ -912,25 +938,110 @@
           </div>
         </section>
 
-        <!-- PANE 6: RESULTS DATABASE -->
+        <!-- PANE 6: RESULTS DATABASE & EXCEL MANAGEMENT -->
         <section id="pane-results" class="admin-section-pane">
+          <!-- Faculty KPI Summary Overview -->
+          <div class="admin-summary-grid" style="margin-bottom: 1.25rem;">
+            <div class="admin-kpi-card">
+              <div class="admin-kpi-icon blue"><i class="fa-solid fa-list-check"></i></div>
+              <div class="admin-kpi-content">
+                <div class="admin-kpi-value" id="fac-kpi-total-submissions">0</div>
+                <div class="admin-kpi-label">Total Submissions</div>
+              </div>
+            </div>
+
+            <div class="admin-kpi-card">
+              <div class="admin-kpi-icon emerald"><i class="fa-solid fa-circle-check"></i></div>
+              <div class="admin-kpi-content">
+                <div class="admin-kpi-value" id="fac-kpi-pass-count" style="color: var(--success);">0</div>
+                <div class="admin-kpi-label">Passed Students</div>
+              </div>
+            </div>
+
+            <div class="admin-kpi-card">
+              <div class="admin-kpi-icon rose"><i class="fa-solid fa-circle-xmark"></i></div>
+              <div class="admin-kpi-content">
+                <div class="admin-kpi-value" id="fac-kpi-fail-count" style="color: var(--danger);">0</div>
+                <div class="admin-kpi-label">Failed Students</div>
+              </div>
+            </div>
+
+            <div class="admin-kpi-card">
+              <div class="admin-kpi-icon purple"><i class="fa-solid fa-chart-line"></i></div>
+              <div class="admin-kpi-content">
+                <div class="admin-kpi-value" id="fac-kpi-avg-marks">0%</div>
+                <div class="admin-kpi-label">Average Score</div>
+              </div>
+            </div>
+          </div>
+
           <div class="glass-card">
-            <div class="table-filter-bar">
-              <div class="input-wrapper" style="flex: 1; max-width: 400px;">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="admin-search-results" class="input-control" placeholder="Search Reg No, Name, or Subject..." onkeyup="filterAdminResultsTable()">
+            <!-- Filter & Action Controls Bar -->
+            <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.25rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div class="dashboard-title" style="margin-bottom: 0;">
+                  <i class="fa-solid fa-file-excel"></i> Examination Result Storage &amp; Excel Management
+                </div>
+
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                  <button type="button" class="btn-secondary" onclick="loadFacultyResultsTable()" title="Reload Result Records">
+                    <i class="fa-solid fa-rotate"></i> View Results
+                  </button>
+                  <button type="button" class="btn-primary" style="width: auto; background: linear-gradient(135deg, #10b981, #059669);" onclick="downloadFacultyExcel()" title="Download Excel Workbook">
+                    <i class="fa-solid fa-file-excel"></i> Download Excel
+                  </button>
+                  <button type="button" class="btn-secondary" onclick="exportFilteredFacultyResults()" title="Export Currently Filtered Results">
+                    <i class="fa-solid fa-file-export"></i> Export Filtered Results
+                  </button>
+                  <button type="button" class="btn-secondary" id="btn-retry-excel-sync" onclick="retryExcelSync()" title="Retry Excel Write Synchronization">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Retry Sync
+                  </button>
+                  <button type="button" class="btn-secondary" id="btn-admin-manage-perms" onclick="openFacultyPermissionsModal()" style="display: none; color: var(--accent-cyan);" title="Admin Permission Control">
+                    <i class="fa-solid fa-user-gear"></i> Manage Permissions
+                  </button>
+                </div>
               </div>
 
-              <div style="display: flex; gap: 0.75rem; align-items: center;">
-                <label style="font-size: 0.83rem; font-weight: 700; color: var(--text-sub);">Filter Status:</label>
-                <select id="admin-filter-status" class="input-control" style="width: 140px;" onchange="filterAdminResultsTable()">
-                  <option value="ALL">All Status</option>
+              <!-- Multi-Field Filter Bar -->
+              <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; background: rgba(0,0,0,0.15); padding: 0.85rem; border-radius: 10px; border: 1px solid var(--border-glass);">
+                <div class="input-wrapper" style="flex: 1; min-width: 220px;">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="fac-search-input" class="input-control" placeholder="Search Reg No, Name, or Exam..." onkeyup="filterFacultyResultsUI()">
+                </div>
+
+                <select id="fac-filter-subject" class="input-control" style="width: 220px;" onchange="filterFacultyResultsUI()">
+                  <option value="ALL">All Authorized Subjects</option>
+                  <option value="Computer Networks">Computer Networks</option>
+                  <option value="Finite Automata">Finite Automata</option>
+                  <option value="Data Warehouse and Data Mining">Data Warehouse and Data Mining</option>
+                  <option value="Fundamentals of Computing">Fundamentals of Computing</option>
+                  <option value="Quantum Computing">Quantum Computing</option>
+                </select>
+
+                <select id="fac-filter-year" class="input-control" style="width: 140px;" onchange="filterFacultyResultsUI()">
+                  <option value="ALL">All Years</option>
+                  <option value="III B.Tech">III B.Tech</option>
+                  <option value="IV B.Tech">IV B.Tech</option>
+                  <option value="II B.Tech">II B.Tech</option>
+                  <option value="I B.Tech">I B.Tech</option>
+                </select>
+
+                <select id="fac-filter-section" class="input-control" style="width: 130px;" onchange="filterFacultyResultsUI()">
+                  <option value="ALL">All Sections</option>
+                  <option value="A">Section A</option>
+                  <option value="B">Section B</option>
+                  <option value="C">Section C</option>
+                </select>
+
+                <select id="fac-filter-status" class="input-control" style="width: 140px;" onchange="filterFacultyResultsUI()">
+                  <option value="ALL">All Statuses</option>
                   <option value="PASS">PASS Only</option>
                   <option value="FAIL">FAIL Only</option>
                 </select>
               </div>
             </div>
 
+            <!-- Detailed Results Table -->
             <div class="table-responsive">
               <table class="admin-data-table">
                 <thead>
@@ -938,11 +1049,16 @@
                     <th>S.No</th>
                     <th>Reg Number</th>
                     <th>Student Name</th>
+                    <th>Year / Sec</th>
                     <th>Subject Paper</th>
-                    <th>Marks</th>
-                    <th>Percentage</th>
-                    <th>Status</th>
-                    <th>Submission Date</th>
+                    <th>Difficulty (E / M / H)</th>
+                    <th>Hints</th>
+                    <th>Score</th>
+                    <th>%</th>
+                    <th>Result</th>
+                    <th>Violations</th>
+                    <th>Excel Sync</th>
+                    <th>Submitted At</th>
                   </tr>
                 </thead>
                 <tbody id="admin-results-table-body">
@@ -1147,16 +1263,16 @@
 
           <div class="form-group">
             <label>Difficulty Level</label>
-            <select id="qe-difficulty" class="input-control" required>
-              <option value="EASY">EASY</option>
-              <option value="MEDIUM" selected>MEDIUM</option>
-              <option value="HARD">HARD</option>
+            <select id="qe-difficulty" class="input-control" required onchange="handleDifficultyChangeUI()">
+              <option value="Easy">Easy (1 Mark)</option>
+              <option value="Medium" selected>Medium (2 Marks)</option>
+              <option value="Hard">Hard (2 Marks)</option>
             </select>
           </div>
 
           <div class="form-group">
-            <label>Marks</label>
-            <input type="number" id="qe-marks" class="input-control" value="1" min="1" max="10" required>
+            <label>Marks (Auto-Assigned)</label>
+            <input type="number" id="qe-marks" class="input-control" value="2" readonly required>
           </div>
         </div>
 
@@ -1223,6 +1339,26 @@
     </div>
   </div>
 
+  <!-- Hint Confirmation Warning Modal -->
+  <div class="modal-overlay" id="hint-confirm-modal">
+    <div class="modal-content" style="max-width: 440px; text-align: center;">
+      <div style="font-size: 2.5rem; color: #f59e0b; margin-bottom: 0.75rem;">
+        <i class="fa-solid fa-lightbulb"></i>
+      </div>
+      <h3>Use Question Hint?</h3>
+      <p style="color: var(--text-sub); font-size: 0.95rem; margin-bottom: 1.25rem;">
+        ⚠️ <strong>Using this hint will reduce the marks for this question by 1.</strong>
+      </p>
+
+      <div class="modal-buttons">
+        <button type="button" class="btn-secondary" style="flex: 1;" onclick="closeHintModal()">Cancel</button>
+        <button type="button" class="btn-primary" style="flex: 1; background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);" onclick="confirmUseHint()">
+          <i class="fa-solid fa-check"></i> [ USE HINT ]
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Submit Confirmation Modal -->
   <div class="modal-overlay" id="submit-modal">
     <div class="modal-content">
@@ -1282,6 +1418,56 @@
           <i class="fa-solid fa-shield"></i> Return to Exam
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- ADMIN FACULTY PERMISSIONS MANAGEMENT MODAL -->
+  <div class="modal-overlay" id="faculty-permissions-modal">
+    <div class="modal-content" style="max-width: 520px;">
+      <div style="font-size: 2.2rem; color: var(--accent-cyan); margin-bottom: 0.5rem; text-align: center;">
+        <i class="fa-solid fa-user-gear"></i>
+      </div>
+      <h3 style="text-align: center;">Faculty Subject Permission Control</h3>
+      <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;">
+        Assign examination subjects that each Faculty account is authorized to view &amp; export.
+      </p>
+
+      <form onsubmit="event.preventDefault(); saveFacultyPermissions();">
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label>Select Faculty Member</label>
+          <select id="fp-faculty-select" class="input-control" required onchange="loadSelectedFacultyPermissions()">
+            <option value="FACULTY01">FACULTY01 - Faculty Coordinator (All Subjects)</option>
+            <option value="FACULTY_CN">FACULTY_CN - Prof. Ramesh (CN &amp; FA)</option>
+            <option value="FACULTY_DW">FACULTY_DW - Prof. Suresh (DWDM &amp; FC)</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label>Assigned Subjects (Check all authorized)</label>
+          <div style="display: flex; flex-direction: column; gap: 0.6rem; background: rgba(0,0,0,0.15); padding: 0.85rem; border-radius: 8px; border: 1px solid var(--border-glass);">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" id="fp-subj-cn" value="Computer Networks" checked> Computer Networks
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" id="fp-subj-fa" value="Finite Automata" checked> Finite Automata
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" id="fp-subj-dw" value="Data Warehouse and Data Mining" checked> Data Warehouse and Data Mining
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" id="fp-subj-fc" value="Fundamentals of Computing" checked> Fundamentals of Computing
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" id="fp-subj-qc" value="Quantum Computing"> Quantum Computing
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-buttons">
+          <button type="button" class="btn-secondary" style="flex: 1;" onclick="closeFacultyPermissionsModal()">Cancel</button>
+          <button type="submit" class="btn-primary" style="flex: 1;"><i class="fa-solid fa-floppy-disk"></i> Update Permissions</button>
+        </div>
+      </form>
     </div>
   </div>
 

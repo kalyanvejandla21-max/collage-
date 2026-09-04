@@ -20,6 +20,26 @@ const examResultSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  easyCount: {
+    type: Number,
+    default: 0
+  },
+  mediumCount: {
+    type: Number,
+    default: 0
+  },
+  hardCount: {
+    type: Number,
+    default: 0
+  },
+  hintsUsed: {
+    type: Number,
+    default: 0
+  },
+  maximumMarks: {
+    type: Number,
+    default: 20
+  },
   correctCount: {
     type: Number,
     required: true
@@ -31,6 +51,10 @@ const examResultSchema = new mongoose.Schema({
   marksObtained: {
     type: String,
     required: true
+  },
+  marksObtainedNum: {
+    type: Number,
+    default: 0
   },
   percentage: {
     type: Number,
@@ -46,9 +70,13 @@ const examResultSchema = new mongoose.Schema({
     {
       questionId: Number,
       question: String,
+      difficulty: String,
+      maxMarks: Number,
+      hintUsed: Boolean,
       userAnswer: Number,
       correctAnswer: Number,
       isCorrect: Boolean,
+      marksAwarded: Number,
       explanation: String
     }
   ],
@@ -63,6 +91,63 @@ const examResultSchema = new mongoose.Schema({
   totalViolationsCount: {
     type: Number,
     default: 0
+  },
+  year: {
+    type: String,
+    default: 'III B.Tech'
+  },
+  section: {
+    type: String,
+    default: 'A'
+  },
+  examName: {
+    type: String,
+    default: ''
+  },
+  examDate: {
+    type: String,
+    default: ''
+  },
+  startTime: {
+    type: String,
+    default: ''
+  },
+  attemptedCount: {
+    type: Number,
+    default: 0
+  },
+  unansweredCount: {
+    type: Number,
+    default: 0
+  },
+  totalMarks: {
+    type: Number,
+    default: 20
+  },
+  durationMinutes: {
+    type: Number,
+    default: 30
+  },
+  timeTaken: {
+    type: String,
+    default: ''
+  },
+  autoSubmitted: {
+    type: Boolean,
+    default: false
+  },
+  submissionType: {
+    type: String,
+    enum: ['MANUAL', 'AUTOMATIC'],
+    default: 'MANUAL'
+  },
+  excelSynced: {
+    type: Boolean,
+    default: true
+  },
+  excelSyncError: {
+    type: String,
+    default: ''
   },
   securityLogs: [
     {

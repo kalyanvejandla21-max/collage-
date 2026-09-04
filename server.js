@@ -30,7 +30,38 @@ connectDB().then(async () => {
         year: 'Faculty',
         section: 'CSE',
         password: 'admin123',
-        role: 'FACULTY'
+        role: 'FACULTY',
+        assignedSubjects: ['Computer Networks', 'Finite Automata', 'Data Warehouse and Data Mining', 'Fundamentals of Computing']
+      },
+      { upsert: true, new: true }
+    );
+
+    // Seed Faculty A (Computer Networks & Finite Automata)
+    await Student.findOneAndUpdate(
+      { regNo: 'FACULTY_CN' },
+      {
+        regNo: 'FACULTY_CN',
+        name: 'Prof. Ramesh (CN/FA)',
+        year: 'Faculty',
+        section: 'CSE',
+        password: 'admin123',
+        role: 'FACULTY',
+        assignedSubjects: ['Computer Networks', 'Finite Automata']
+      },
+      { upsert: true, new: true }
+    );
+
+    // Seed Faculty B (Data Warehouse & Fundamentals)
+    await Student.findOneAndUpdate(
+      { regNo: 'FACULTY_DW' },
+      {
+        regNo: 'FACULTY_DW',
+        name: 'Prof. Suresh (DWDM/FC)',
+        year: 'Faculty',
+        section: 'CSE',
+        password: 'admin123',
+        role: 'FACULTY',
+        assignedSubjects: ['Data Warehouse and Data Mining', 'Fundamentals of Computing']
       },
       { upsert: true, new: true }
     );
@@ -77,7 +108,32 @@ connectDB().then(async () => {
       { upsert: true, new: true }
     );
 
-    console.log(`📅 Exam Schedules Initialized: Computer Networks (${today}), Quantum Computing (${tomorrow})`);
+    // Auto-seed Student Master Database if empty
+    const fs = require('fs');
+    const studentCount = await Student.countDocuments({ role: 'STUDENT' });
+    if (studentCount < 10) {
+      const masterPath = path.join(__dirname, 'data', 'students_master.json');
+      if (fs.existsSync(masterPath)) {
+        const masterList = JSON.parse(fs.readFileSync(masterPath, 'utf8'));
+        const docs = masterList.map(s => ({
+          regNo: s.regNo || s.hallticket,
+          name: s.name,
+          department: s.department || 'CSE',
+          course: s.course || 'B.Tech',
+          year: String(s.year || '3'),
+          semester: String(s.semester || '1'),
+          section: s.section || 'A',
+          photo_url: s.photo_url || '',
+          password: 'password123',
+          role: 'STUDENT',
+          isActive: true
+        }));
+        await Student.insertMany(docs);
+        console.log(`✅ Auto-seeded ${docs.length} master student records into MongoDB on startup.`);
+      }
+    }
+
+    console.log(`📅 Exam Schedules & Faculty Accounts Initialized.`);
   } catch (err) {
     console.error('Failed to seed exam schedules:', err);
   }
@@ -86,6 +142,18 @@ connectDB().then(async () => {
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+
+// SERVER-SIDE SECURITY: Block direct HTTP requests for Excel files & results directory
+app.use((req, res, next) => {
+  const reqPath = req.path.toLowerCase();
+  if (reqPath.endsWith('.xlsx') || reqPath.includes('/data/results') || reqPath.includes('/excel_results')) {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Direct access to Excel result files is forbidden.'
+    });
+  }
+  next();
+});
 
 // Serve static frontend files (index.html, styles.css, app.js, questions.js)
 app.use(express.static(__dirname));

@@ -49,14 +49,16 @@ router.post('/login', async (req, res) => {
 
     // Default Faculty Seed Check
     if ((cleanId === 'FACULTY01' || cleanId === 'ADMIN') && passStr === 'admin123') {
+      const isMasterAdmin = cleanId === 'ADMIN';
       return res.json({
         success: true,
         message: 'Faculty Admin Authentication Successful',
         user: {
-          id: 'FACULTY01',
-          name: 'Faculty Coordinator',
-          role: 'FACULTY',
-          department: 'Computer Science & Engineering'
+          id: cleanId,
+          name: isMasterAdmin ? 'System Administrator' : 'Faculty Coordinator',
+          role: isMasterAdmin ? 'ADMIN' : 'FACULTY',
+          department: 'Computer Science & Engineering',
+          assignedSubjects: ['Computer Networks', 'Finite Automata', 'Data Warehouse and Data Mining', 'Fundamentals of Computing']
         }
       });
     }
@@ -71,7 +73,8 @@ router.post('/login', async (req, res) => {
           id: user.regNo,
           name: user.name,
           role: user.role,
-          department: 'CSE'
+          department: 'CSE',
+          assignedSubjects: user.assignedSubjects || []
         }
       });
     }
@@ -334,6 +337,21 @@ router.post('/questions', async (req, res) => {
     const maxQ = await Question.findOne({ subject }).sort({ questionId: -1 });
     const questionId = maxQ ? maxQ.questionId + 1 : 1;
 
+    const diffUpper = (difficulty || 'MEDIUM').toString().trim().toUpperCase();
+    let normDiff = 'Medium';
+    let normMarks = 2;
+
+    if (diffUpper === 'EASY') {
+      normDiff = 'Easy';
+      normMarks = 1;
+    } else if (diffUpper === 'HARD') {
+      normDiff = 'Hard';
+      normMarks = 2;
+    } else {
+      normDiff = 'Medium';
+      normMarks = 2;
+    }
+
     const newQ = await Question.create({
       subject,
       questionId,
@@ -342,8 +360,8 @@ router.post('/questions', async (req, res) => {
       correct: parseInt(correct, 10),
       explanation: explanation || '',
       topic: topic || 'General',
-      difficulty: (difficulty || 'MEDIUM').toUpperCase(),
-      marks: parseInt(marks || 1, 10),
+      difficulty: normDiff,
+      marks: normMarks,
       hint: hint || ''
     });
 
@@ -359,7 +377,23 @@ router.post('/questions', async (req, res) => {
 router.put('/questions/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const updated = await Question.findByIdAndUpdate(id, req.body, { new: true });
+    const updateData = { ...req.body };
+
+    if (updateData.difficulty) {
+      const diffUpper = String(updateData.difficulty).trim().toUpperCase();
+      if (diffUpper === 'EASY') {
+        updateData.difficulty = 'Easy';
+        updateData.marks = 1;
+      } else if (diffUpper === 'HARD') {
+        updateData.difficulty = 'Hard';
+        updateData.marks = 2;
+      } else {
+        updateData.difficulty = 'Medium';
+        updateData.marks = 2;
+      }
+    }
+
+    const updated = await Question.findByIdAndUpdate(id, updateData, { new: true });
     res.json({ success: true, message: 'Question updated successfully.', question: updated });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -452,8 +486,26 @@ router.post('/questions/import', async (req, res) => {
 
       const subject = subjIdx !== -1 && row[subjIdx] ? String(row[subjIdx]).trim() : 'General';
       const rawDiff = diffIdx !== -1 && row[diffIdx] ? String(row[diffIdx]).trim().toUpperCase() : 'MEDIUM';
-      const difficulty = ['EASY', 'MEDIUM', 'HARD'].includes(rawDiff) ? rawDiff : 'MEDIUM';
-      const marks = marksIdx !== -1 && row[marksIdx] ? parseInt(row[marksIdx], 10) || 1 : 1;
+
+      if (diffIdx !== -1 && row[diffIdx] && !['EASY', 'MEDIUM', 'HARD', 'EASY QUESTION', 'MEDIUM QUESTION', 'HARD QUESTION'].includes(rawDiff)) {
+        invalidQuestions.push({ rowNumber: i + 1, question: qText, reason: `Invalid difficulty '${row[diffIdx]}'. Allowed values: Easy, Medium, Hard.` });
+        continue;
+      }
+
+      let difficulty = 'Medium';
+      let marks = 2;
+
+      if (rawDiff.includes('EASY')) {
+        difficulty = 'Easy';
+        marks = 1;
+      } else if (rawDiff.includes('HARD')) {
+        difficulty = 'Hard';
+        marks = 2;
+      } else {
+        difficulty = 'Medium';
+        marks = 2;
+      }
+
       const hint = hintIdx !== -1 && row[hintIdx] ? String(row[hintIdx]).trim() : '';
 
       validQuestions.push({
@@ -630,6 +682,51 @@ router.get('/participation/:examId', async (req, res) => {
     }
 
     res.json({ success: true, examId, total: studentStatusList.length, studentStatusList });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// 17. GET /api/admin/faculty/list - List all faculty accounts & assigned subjects
+router.get('/faculty/list', async (req, res) => {
+  try {
+    const facultyList = await Student.find({ role: { $in: ['FACULTY', 'ADMIN'] } }).select('-password');
+    res.json({ success: true, count: facultyList.length, facultyList });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// 18. PUT /api/admin/faculty/permissions - Admin updates assigned subjects for a faculty user
+router.post('/faculty/permissions', async (req, res) => {
+  try {
+    const { facultyRegNo, assignedSubjects } = req.body;
+    if (!facultyRegNo || !Array.isArray(assignedSubjects)) {
+      return res.status(400).json({ success: false, message: 'facultyRegNo and assignedSubjects array are required.' });
+    }
+
+    const cleanReg = facultyRegNo.trim().toUpperCase();
+    const updated = await Student.findOneAndUpdate(
+      { regNo: cleanReg, role: { $in: ['FACULTY', 'ADMIN'] } },
+      { assignedSubjects },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ success: false, message: `Faculty member '${cleanReg}' not found.` });
+    }
+
+    await logActivity(`Updated Faculty Subject Permissions`, `Faculty: ${cleanReg} | Subjects: ${assignedSubjects.join(', ')}`);
+
+    res.json({
+      success: true,
+      message: `Assigned subjects for '${cleanReg}' updated successfully.`,
+      faculty: {
+        id: updated.regNo,
+        name: updated.name,
+        assignedSubjects: updated.assignedSubjects
+      }
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

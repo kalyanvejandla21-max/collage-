@@ -135,11 +135,28 @@ router.post('/:examId/start', async (req, res) => {
     const cleanReg = regNo.trim().toUpperCase();
     const now = new Date();
 
+    // 0. Verify Student Master Database & Account Status
+    const Student = require('../models/Student');
+    const student = await Student.findOne({ regNo: cleanReg });
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student record not found. Please check your Hall Ticket Number.'
+      });
+    }
+    if (student.isActive === false) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account is currently inactive. Please contact the faculty.'
+      });
+    }
+
     // 1. Find exam schedule
     const schedule = await ExamSchedule.findOne({ examId: examId.toUpperCase() });
     if (!schedule) {
       return res.status(404).json({ success: false, message: `Exam schedule '${examId}' not found.` });
     }
+
 
     const startDt = parseExamTimestamp(schedule.examDate, schedule.startTime);
     const latestStartDt = parseExamTimestamp(schedule.examDate, schedule.latestAllowedStartTime);

@@ -259,15 +259,37 @@ body {
   align-items: center;
   gap: 0.65rem;
   background: var(--bg-input);
-  padding: 0.4rem 0.9rem;
+  padding: 0.35rem 0.9rem;
   border-radius: 30px;
   border: 1px solid var(--border-glass);
   box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.avatar-frame {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--primary);
+  background: var(--bg-card);
+  flex-shrink: 0;
+}
+
+.header-user-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .avatar {
-  width: 32px;
-  height: 32px;
+  width: 100%;
+  height: 100%;
   background: var(--primary-gradient);
   color: #fff;
   border-radius: 50%;
@@ -275,7 +297,7 @@ body {
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   box-shadow: 0 2px 8px var(--primary-glow);
 }
 
@@ -284,9 +306,27 @@ body {
   line-height: 1.25;
 }
 
+.user-name-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
 .user-name {
   font-weight: 700;
   color: var(--text-main);
+}
+
+.user-dept-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.1rem 0.45rem;
+  border-radius: 10px;
+  background: rgba(2, 132, 199, 0.15);
+  color: var(--accent-cyan);
+  border: 1px solid rgba(2, 132, 199, 0.3);
+  line-height: 1;
 }
 
 .user-reg {
@@ -2193,17 +2233,7 @@ body {
 
 /* EXAM SECURITY LIVE STATUS BAR & METRICS */
 .exam-security-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  background: rgba(15, 23, 42, 0.5);
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius-md);
-  padding: 0.6rem 1rem;
-  margin-top: 0.85rem;
-  font-size: 0.8rem;
-  flex-wrap: wrap;
+  display: none !important;
 }
 
 .sec-indicator-pill {
@@ -3119,7 +3149,7 @@ body {
   user-select: none;
   cursor: default;
   opacity: 1;
-  transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+  transition: opacity 0.25s ease-out, transform 0.25s ease-out;
 }
 
 .intro-overlay.dismissed {
@@ -3160,18 +3190,70 @@ body {
   backface-visibility: hidden;
 }
 
-/* 13-Stage Keyframe Attachments (4.0s total duration) */
-.stage-aliet-logo  { animation: animAlietLogo 4s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
-.stage-education   { animation: animStage2 4s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
-.stage-research    { animation: animStage3 4s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
-.stage-science     { animation: animStage4 4s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
-.stage-community   { animation: animStage5 4s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
-.stage-exam        { animation: animStage6 4s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
-.stage-random      { animation: animStage7 4s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
-.stage-security    { animation: animStage8 4s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
-.stage-faith       { animation: animStage9 4s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
-.stage-service     { animation: animStage10 4s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
-.stage-excellence  { animation: animStage11 4s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+/* 13-Stage Keyframe Attachments (1.3x Speed: 3.08s animation + 0.25s fade-out = ~3.33s total duration) */
+.stage-aliet-logo  { animation: animAlietLogo 3.08s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.stage-education   { animation: animStage2 3.08s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.stage-research    { animation: animStage3 3.08s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.stage-science     { animation: animStage4 3.08s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.stage-community   { animation: animStage5 3.08s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.stage-exam        { animation: animStage6 3.08s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.stage-random      { animation: animStage7 3.08s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.stage-security    { animation: animStage8 3.08s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.stage-faith       { animation: animStage9 3.08s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.stage-service     { animation: animStage10 3.08s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.stage-excellence  { animation: animStage11 3.08s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+
+/* Live Image Subtitle Labels Container */
+.intro-labels-container {
+  position: relative;
+  height: 38px;
+  margin-top: -0.6rem;
+  margin-bottom: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.stage-label {
+  position: absolute;
+  font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  font-size: clamp(0.72rem, 2vw, 0.9rem);
+  font-weight: 700;
+  color: #800000;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(128, 0, 0, 0.06);
+  border: 1px solid rgba(128, 0, 0, 0.2);
+  padding: 0.35rem 0.95rem;
+  border-radius: 30px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: scale(0.9);
+  backface-visibility: hidden;
+  box-shadow: 0 2px 12px rgba(128, 0, 0, 0.08);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.stage-label i {
+  font-size: 0.85rem;
+  color: #800000;
+}
+
+/* Label Animation Attachments matching 1.3x Speed (3.08s) */
+.label-aliet-logo  { animation: animAlietLogo 3.08s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.label-education   { animation: animStage2 3.08s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.label-research    { animation: animStage3 3.08s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.label-science     { animation: animStage4 3.08s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.label-community   { animation: animStage5 3.08s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.label-exam        { animation: animStage6 3.08s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.label-random      { animation: animStage7 3.08s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.label-security    { animation: animStage8 3.08s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.label-faith       { animation: animStage9 3.08s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.label-service     { animation: animStage10 3.08s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.label-excellence  { animation: animStage11 3.08s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
 
 /* Text Animations */
 .intro-text-container {
@@ -3194,7 +3276,7 @@ body {
   white-space: nowrap;
   text-align: center;
   max-width: 95vw;
-  animation: animCollegeName 4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: animCollegeName 3.08s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .intro-final-title-group {
@@ -3202,7 +3284,7 @@ body {
   opacity: 0;
   transform: translateY(10px);
   text-align: center;
-  animation: animFinalTitleGroup 4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: animFinalTitleGroup 3.08s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .intro-portal-title {
@@ -3640,6 +3722,107 @@ body {
 .status-pill.in-progress { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
 .status-pill.completed { background: rgba(100, 116, 139, 0.15); color: #64748b; }
 .status-pill.cancelled { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+
+/* DIFFICULTY-BASED MARKING & HINT SYSTEM ENHANCEMENTS */
+.q-diff-badge {
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.q-diff-badge.easy { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+.q-diff-badge.medium { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+.q-diff-badge.hard { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+.q-marks-badge {
+  background: rgba(2, 132, 199, 0.15);
+  color: var(--primary);
+  border: 1px solid rgba(2, 132, 199, 0.3);
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.btn-hint {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.2));
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  padding: 0.6rem 1.1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: var(--transition);
+}
+.btn-hint:hover {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+.btn-hint.used {
+  background: rgba(100, 116, 139, 0.15);
+  color: #64748b;
+  border-color: rgba(100, 116, 139, 0.3);
+  cursor: default;
+  box-shadow: none;
+}
+
+.hint-display-box {
+  margin-top: 1.25rem;
+  padding: 1rem 1.25rem;
+  background: rgba(245, 158, 11, 0.08);
+  border-left: 4px solid #f59e0b;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  color: var(--text-main);
+  animation: fadeIn 0.3s ease;
+}
+
+/* Palette Palette Color Indicators */
+.dot.easy-dot { background: #10b981; }
+.dot.medium-dot { background: #f59e0b; }
+.dot.hard-dot { background: #ef4444; }
+
+.q-pill.easy-pill::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #10b981;
+}
+.q-pill.medium-pill::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #f59e0b;
+}
+.q-pill.hard-pill::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #ef4444;
+}
 
 
 

@@ -57,6 +57,21 @@ function processRandomExamPaper(questionList, limit = 20, difficultyDist = null)
     const shuffledOpts = shuffleArray(options);
     const newCorrectIdx = shuffledOpts.indexOf(correctText);
 
+    const diffUpper = (q.difficulty || (idx % 3 === 0 ? 'EASY' : (idx % 3 === 1 ? 'MEDIUM' : 'HARD'))).toString().trim().toUpperCase();
+    let normDiff = 'Medium';
+    let normMarks = 2;
+
+    if (diffUpper === 'EASY') {
+      normDiff = 'Easy';
+      normMarks = 1;
+    } else if (diffUpper === 'HARD') {
+      normDiff = 'Hard';
+      normMarks = 2;
+    } else {
+      normDiff = 'Medium';
+      normMarks = 2;
+    }
+
     return {
       id: q.questionId || q.id || (idx + 1),
       questionId: q.questionId || q.id || (idx + 1),
@@ -64,9 +79,9 @@ function processRandomExamPaper(questionList, limit = 20, difficultyDist = null)
       question: q.question,
       options: shuffledOpts,
       correct: newCorrectIdx !== -1 ? newCorrectIdx : 0,
-      difficulty: q.difficulty || 'MEDIUM',
-      marks: q.marks || 1,
-      hint: q.hint || '',
+      difficulty: normDiff,
+      marks: normMarks,
+      hint: q.hint || `Analyze key principles of ${q.subject || 'this topic'}.`,
       explanation: q.explanation || ''
     };
   });

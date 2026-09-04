@@ -7,8 +7,13 @@ let isLoggedIn = false;
 let currentStudent = {
   name: "Kalyan",
   regNo: "23A91A0501",
-  year: "III B.Tech",
-  section: "A"
+  department: "CSE",
+  course: "B.Tech",
+  year: "3",
+  semester: "1",
+  section: "A",
+  photo_url: "",
+  role: "STUDENT"
 };
 
 // Roll Number to Student Name Database & Generator (Fallback)
@@ -61,6 +66,7 @@ let selectedSubject = "Computer Networks";
 let currentQuestions = [];
 let userAnswers = new Array(20).fill(null);
 let reviewFlags = new Array(20).fill(false);
+let hintsUsedFlags = new Array(20).fill(false);
 let currentQIndex = 0;
 
 let timerInterval = null;
@@ -211,64 +217,132 @@ function showPage(pageId) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Page 1: Login Handler (Strict Validation & Backend Authentication)
+// Update UI Headers & Profile Cards across all screens
+function updateStudentProfileUI() {
+  if (!currentStudent) return;
+
+  const studentName = currentStudent.name || 'Student';
+  const regNo = currentStudent.regNo || currentStudent.hallticket || '';
+  const dept = currentStudent.department || 'CSE';
+  const yearStr = currentStudent.year || '3';
+  const semStr = currentStudent.semester || '1';
+  const sectionStr = currentStudent.section || 'A';
+  const photoUrl = currentStudent.photo_url || '';
+
+  // Top-Right Header Elements
+  const headerName = document.getElementById('header-student-name');
+  const headerReg = document.getElementById('header-student-reg');
+  const headerDept = document.getElementById('header-student-dept');
+  const headerPhoto = document.getElementById('header-student-photo');
+  const avatarInitials = document.getElementById('avatar-initials');
+
+  if (headerName) headerName.innerText = studentName;
+  if (headerReg) headerReg.innerText = regNo;
+  if (headerDept) headerDept.innerText = dept;
+
+  if (avatarInitials) {
+    avatarInitials.innerText = studentName.charAt(0).toUpperCase();
+  }
+
+  if (headerPhoto) {
+    if (photoUrl && photoUrl.trim().length > 0) {
+      headerPhoto.src = photoUrl;
+      headerPhoto.style.display = 'block';
+      if (avatarInitials) avatarInitials.style.display = 'none';
+    } else {
+      headerPhoto.style.display = 'none';
+      if (avatarInitials) avatarInitials.style.display = 'flex';
+    }
+  }
+
+  // Dashboard Page Elements
+  const dashName = document.getElementById('dash-student-name');
+  const dashReg = document.getElementById('dash-reg-no');
+  const dashYear = document.getElementById('dash-student-year');
+  const dashSec = document.getElementById('dash-student-sec');
+
+  if (dashName) dashName.innerText = studentName;
+  if (dashReg) dashReg.innerText = regNo;
+  if (dashYear) dashYear.innerText = `Year ${yearStr} • Semester ${semStr}`;
+  if (dashSec) dashSec.innerText = `${dept} - Section ${sectionStr}`;
+
+  // Exam Page Elements
+  const examName = document.getElementById('exam-student-name');
+  const examReg = document.getElementById('exam-reg-no');
+  if (examName) examName.innerText = studentName;
+  if (examReg) examReg.innerText = regNo;
+
+  // Result Page Elements
+  const resName = document.getElementById('res-student-name');
+  const resReg = document.getElementById('res-reg-no');
+  if (resName) resName.innerText = studentName;
+  if (resReg) resReg.innerText = regNo;
+}
+
+// Page 1: Login Handler (Strict Student Master Database Authentication)
 async function handleLogin() {
   clearLoginError();
   const studentIdInput = document.getElementById('student-id')?.value.trim() || '';
   const passwordInput = document.getElementById('password')?.value || '';
 
-  // 1. Strict Roll Number Validation (24HP1A0501 - 24HP1A0566)
-  if (!isValidRollNumber(studentIdInput)) {
-    showLoginError("Invalid Roll Number! Only registered students can access the exam.");
+  if (!studentIdInput) {
+    showLoginError("Please enter your Hall Ticket Number.");
     return;
   }
 
-  // 2. Strict Password Validation (8+ chars, 1 uppercase, 1 symbol)
+  // 1. Password Criteria Check (8+ chars, 1 uppercase, 1 symbol)
   const passCheck = checkPasswordCriteria(passwordInput);
   if (!passCheck.isValid) {
     showLoginError("Password must have 8+ characters, 1 uppercase, 1 symbol");
     return;
   }
 
-  currentStudent.regNo = studentIdInput.toUpperCase();
+  const cleanReg = studentIdInput.toUpperCase();
 
-  if (isBackendConnected) {
-    try {
-      const res = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ regNo: currentStudent.regNo, password: passwordInput })
-      });
-      const data = await res.json();
-      if (data.success && data.student) {
-        currentStudent.name = data.student.name;
-        currentStudent.year = data.student.year || 'III B.Tech';
-        currentStudent.section = data.student.section || 'A';
-      } else {
-        showLoginError(data.message || "Invalid Roll Number! Only registered students can access the exam.");
-        return;
-      }
-    } catch (e) {
-      console.error("Backend login error:", e);
-      currentStudent.name = getStudentNameByRollNo(currentStudent.regNo);
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/student-login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ regNo: cleanReg, password: passwordInput })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success || !data.student) {
+      // REQUIREMENT 3 & 22: Display clear error message from backend
+      showLoginError(data.message || "Student record not found. Please check your Hall Ticket Number.");
+      return;
     }
-  } else {
-    currentStudent.name = getStudentNameByRollNo(currentStudent.regNo);
+
+    // REQUIREMENT 4 & 5: Populate student profile from authenticated database record
+    currentStudent = {
+      id: data.student.id,
+      regNo: data.student.regNo || cleanReg,
+      hallticket: data.student.hallticket || cleanReg,
+      name: data.student.name || 'Student',
+      department: data.student.department || 'CSE',
+      course: data.student.course || 'B.Tech',
+      year: data.student.year || '3',
+      semester: data.student.semester || '1',
+      section: data.student.section || 'A',
+      photo_url: data.student.photo_url || '',
+      role: data.student.role || 'STUDENT'
+    };
+
+    if (data.token) {
+      sessionStorage.setItem('student_auth_token', data.token);
+    }
+
+  } catch (e) {
+    console.error("Backend student login fetch error:", e);
+    showLoginError("Unable to verify student information. Please check server connection.");
+    return;
   }
 
   isLoggedIn = true;
 
-  // Update UI headers across all screens
-  document.getElementById('header-student-name').innerText = currentStudent.name;
-  document.getElementById('header-student-reg').innerText = currentStudent.regNo;
-  document.getElementById('dash-student-name').innerText = currentStudent.name;
-  document.getElementById('dash-reg-no').innerText = currentStudent.regNo;
-
-  // Update header avatar initials
-  const avatarEl = document.getElementById('avatar-initials');
-  if (avatarEl) {
-    avatarEl.innerText = currentStudent.name.charAt(0).toUpperCase();
-  }
+  // REQUIREMENT 6, 7 & 9: Update student profile in top-right corner & dashboard
+  updateStudentProfileUI();
 
   showPage('dashboard-page');
 }
@@ -872,6 +946,7 @@ async function startExam() {
   // Reset exam state
   userAnswers = new Array(currentQuestions.length).fill(null);
   reviewFlags = new Array(currentQuestions.length).fill(false);
+  hintsUsedFlags = new Array(currentQuestions.length).fill(false);
   currentQIndex = 0;
   if (!secondsRemaining) secondsRemaining = 20 * 60;
 
@@ -899,6 +974,34 @@ function renderQuestion() {
   const qData = currentQuestions[currentQIndex];
   if (!qData) return;
 
+  // Normalize Difficulty & Marks
+  const diffStr = qData.difficulty || (currentQIndex % 3 === 0 ? 'Easy' : (currentQIndex % 3 === 1 ? 'Medium' : 'Hard'));
+  const diffUpper = String(diffStr).trim().toUpperCase();
+  let normDiff = 'Medium';
+  let baseMarks = 2;
+
+  if (diffUpper === 'EASY') {
+    normDiff = 'Easy';
+    baseMarks = 1;
+  } else if (diffUpper === 'HARD') {
+    normDiff = 'Hard';
+    baseMarks = 2;
+  } else {
+    normDiff = 'Medium';
+    baseMarks = 2;
+  }
+
+  // Update Difficulty & Marks Badges
+  const diffBadge = document.getElementById('q-difficulty-badge');
+  const marksBadge = document.getElementById('q-marks-badge');
+  if (diffBadge) {
+    diffBadge.innerText = `Difficulty: ${normDiff.toUpperCase()}`;
+    diffBadge.className = `q-diff-badge ${normDiff.toLowerCase()}`;
+  }
+  if (marksBadge) {
+    marksBadge.innerText = `Marks: ${baseMarks}`;
+  }
+
   // Question number header
   document.getElementById('q-number-display').innerText = `Question ${currentQIndex + 1} of ${currentQuestions.length}`;
   document.getElementById('q-text-display').innerText = `Q${qData.questionId || (currentQIndex + 1)}. ${qData.question}`;
@@ -921,6 +1024,32 @@ function renderQuestion() {
     optionsContainer.appendChild(optionDiv);
   });
 
+  // Hint Container & Button state
+  const hintBtn = document.getElementById('hint-btn');
+  const hintBox = document.getElementById('q-hint-box');
+  const hintText = document.getElementById('q-hint-text');
+  const isHintUsed = Boolean(hintsUsedFlags[currentQIndex]);
+
+  if (hintBtn) {
+    if (isHintUsed) {
+      hintBtn.className = 'btn-hint used';
+      hintBtn.innerHTML = `<i class="fa-solid fa-lightbulb"></i> Hint Used (-1 Mark)`;
+    } else {
+      hintBtn.className = 'btn-hint';
+      hintBtn.innerHTML = `<i class="fa-solid fa-lightbulb"></i> [ USE HINT ]`;
+    }
+  }
+
+  if (hintBox && hintText) {
+    if (isHintUsed) {
+      hintBox.style.display = 'block';
+      hintText.innerText = qData.hint || `Focus on core principles of ${selectedSubject}.`;
+    } else {
+      hintBox.style.display = 'none';
+      hintText.innerText = '';
+    }
+  }
+
   // Update Review Button status
   const reviewBtn = document.getElementById('review-btn');
   if (reviewFlags[currentQIndex]) {
@@ -934,6 +1063,24 @@ function renderQuestion() {
   // Update Question Palette UI & Progress Bar
   renderGridPalette();
   updateProgressBar();
+}
+
+// Hint System Modal & Handlers
+function promptUseHint() {
+  if (hintsUsedFlags[currentQIndex]) return;
+  const modal = document.getElementById('hint-confirm-modal');
+  if (modal) modal.classList.add('active');
+}
+
+function closeHintModal() {
+  const modal = document.getElementById('hint-confirm-modal');
+  if (modal) modal.classList.remove('active');
+}
+
+function confirmUseHint() {
+  hintsUsedFlags[currentQIndex] = true;
+  closeHintModal();
+  renderQuestion();
 }
 
 // Update Top Progress Bar
@@ -987,15 +1134,19 @@ function jumpToQuestion(index) {
   renderQuestion();
 }
 
-// Render Sidebar Question Grid
+// Render Sidebar Question Grid with Difficulty Color Indicators (🟢 Easy, 🟡 Medium, 🔴 Hard)
 function renderGridPalette() {
   const gridContainer = document.getElementById('question-grid-palette');
   if (!gridContainer) return;
   gridContainer.innerHTML = '';
 
   for (let i = 0; i < currentQuestions.length; i++) {
+    const qData = currentQuestions[i] || {};
+    const diffStr = qData.difficulty || (i % 3 === 0 ? 'Easy' : (i % 3 === 1 ? 'Medium' : 'Hard'));
+    const diffLower = String(diffStr).trim().toLowerCase();
+
     const pill = document.createElement('div');
-    let pillClass = 'q-pill';
+    let pillClass = `q-pill ${diffLower}-pill`;
 
     if (i === currentQIndex) {
       pillClass += ' current';
@@ -1051,16 +1202,65 @@ function updateTimerDisplay() {
   }
 }
 
-// Modal Submission Confirmation
+// Modal Submission Confirmation with Dynamic Score Breakdown & Preview Marks
 function confirmSubmitExam() {
   let answeredCount = 0;
-  for (let i = 0; i < userAnswers.length; i++) {
-    if (userAnswers[i] !== null) answeredCount++;
-  }
+  let hintsUsedCount = 0;
+  let easyCount = 0;
+  let mediumCount = 0;
+  let hardCount = 0;
+  let maxMarks = 0;
+  let estimatedMarks = 0;
+
+  currentQuestions.forEach((q, idx) => {
+    const diffStr = q.difficulty || (idx % 3 === 0 ? 'Easy' : (idx % 3 === 1 ? 'Medium' : 'Hard'));
+    const diffUpper = String(diffStr).trim().toUpperCase();
+    let baseMarks = 2;
+
+    if (diffUpper === 'EASY') {
+      baseMarks = 1;
+      easyCount++;
+    } else if (diffUpper === 'HARD') {
+      baseMarks = 2;
+      hardCount++;
+    } else {
+      baseMarks = 2;
+      mediumCount++;
+    }
+
+    maxMarks += baseMarks;
+    const isHintUsed = Boolean(hintsUsedFlags[idx]);
+    if (isHintUsed) hintsUsedCount++;
+
+    const availMarks = isHintUsed ? Math.max(0, baseMarks - 1) : baseMarks;
+    const studentAns = userAnswers[idx];
+
+    if (studentAns !== null && studentAns !== undefined) {
+      answeredCount++;
+      // Estimated score assumes answered question is scored (without exposing correct/wrong status)
+      estimatedMarks += availMarks;
+    }
+  });
+
   const unansweredCount = currentQuestions.length - answeredCount;
 
-  document.getElementById('modal-summary-text').innerText = 
-    `You have answered ${answeredCount} out of ${currentQuestions.length} questions (${unansweredCount} unanswered). Are you ready to submit your paper?`;
+  const summaryEl = document.getElementById('modal-summary-text');
+  if (summaryEl) {
+    summaryEl.innerHTML = `
+      <div style="text-align: left; background: rgba(2, 132, 199, 0.05); border: 1px solid rgba(2, 132, 199, 0.2); padding: 1rem; border-radius: 8px; font-size: 0.88rem; line-height: 1.6; margin: 0.85rem 0;">
+        <div style="font-weight: 800; color: var(--primary); margin-bottom: 0.4rem; font-size: 0.95rem;">📊 EXAM PREVIEW SUMMARY</div>
+        • <strong>Total Questions:</strong> ${currentQuestions.length}<br>
+        • <strong>Easy Questions:</strong> ${easyCount} × 1 = ${easyCount * 1} Marks<br>
+        • <strong>Medium Questions:</strong> ${mediumCount} × 2 = ${mediumCount * 2} Marks<br>
+        • <strong>Hard Questions:</strong> ${hardCount} × 2 = ${hardCount * 2} Marks<br>
+        • <strong style="color: var(--primary);">Maximum Total Marks: ${maxMarks}</strong><br>
+        • <strong>Answered:</strong> ${answeredCount} | <strong>Unanswered:</strong> ${unansweredCount}<br>
+        • <strong>Hints Used:</strong> ${hintsUsedCount}<br>
+        • <strong>Estimated Maximum Score:</strong> <span style="color: var(--success); font-weight: 800;">${estimatedMarks} Marks</span>
+      </div>
+      <p style="margin-top: 0.5rem; color: var(--text-sub);">Are you ready to submit your examination paper?</p>
+    `;
+  }
   
   document.getElementById('submit-modal').classList.add('active');
 }
@@ -1084,8 +1284,19 @@ async function finalizeExamSubmission() {
       body: JSON.stringify({
         regNo: currentStudent.regNo,
         studentName: currentStudent.name,
+        year: currentStudent.year || 'III B.Tech',
+        section: currentStudent.section || 'A',
         subject: selectedSubject,
+        examName: `${selectedSubject} Mid Examination`,
+        examDate: new Date().toISOString().split('T')[0],
+        startTime: '10:00 AM',
         userAnswers: userAnswers,
+        hintsUsed: hintsUsedFlags,
+        questionList: currentQuestions,
+        durationMinutes: 30,
+        timeTaken: '20 Mins',
+        autoSubmitted: typeof isAutoSubmitted !== 'undefined' ? Boolean(isAutoSubmitted) : false,
+        submissionType: (typeof isAutoSubmitted !== 'undefined' && isAutoSubmitted) ? 'AUTOMATIC' : 'MANUAL',
         fullscreenExitCount,
         tabSwitchCount,
         totalViolationsCount,
@@ -1103,6 +1314,13 @@ async function finalizeExamSubmission() {
 
   let correctCount = 0;
   let wrongCount = 0;
+  let easyCount = 0;
+  let mediumCount = 0;
+  let hardCount = 0;
+  let hintsUsedTotal = 0;
+  let totalMaxMarks = 0;
+  let totalMarksObtained = 0;
+
   const breakdownContainer = document.getElementById('answer-breakdown-list');
   breakdownContainer.innerHTML = '';
 
@@ -1111,6 +1329,11 @@ async function finalizeExamSubmission() {
   if (backendResultDoc && backendResultDoc.breakdown && backendResultDoc.breakdown.length > 0) {
     correctCount = backendResultDoc.correctCount;
     wrongCount = backendResultDoc.wrongCount;
+    easyCount = backendResultDoc.easyCount || 0;
+    mediumCount = backendResultDoc.mediumCount || 0;
+    hardCount = backendResultDoc.hardCount || 0;
+    hintsUsedTotal = backendResultDoc.hintsUsed || 0;
+    totalMaxMarks = backendResultDoc.maximumMarks || 20;
 
     backendResultDoc.breakdown.forEach((item, idx) => {
       const q = currentQuestions[idx] || { options: [] };
@@ -1122,14 +1345,25 @@ async function finalizeExamSubmission() {
         ? `${labels[item.correctAnswer]}. ${q.options[item.correctAnswer]}`
         : `Option ${labels[item.correctAnswer]}`;
 
+      const normDiff = item.difficulty || 'Medium';
+      const maxM = item.maxMarks || 2;
+      const isHint = Boolean(item.hintUsed);
+      const mAwarded = item.marksAwarded !== undefined ? item.marksAwarded : (item.isCorrect ? (isHint ? Math.max(0, maxM - 1) : maxM) : 0);
+
       const reviewCard = document.createElement('div');
       reviewCard.className = `review-item ${item.isCorrect ? 'is-correct' : 'is-wrong'}`;
 
       reviewCard.innerHTML = `
         <div class="review-item-header">
-          <div>Q${idx + 1}. ${item.question}</div>
-          <div style="color: ${item.isCorrect ? 'var(--success)' : 'var(--danger)'}; font-weight: 700;">
-            ${item.isCorrect ? '<i class="fa-solid fa-circle-check"></i> Correct (+1)' : '<i class="fa-solid fa-circle-xmark"></i> Incorrect (0)'}
+          <div>
+            <strong>Q${idx + 1}. ${item.question}</strong>
+            <div style="margin-top: 0.35rem; display: flex; gap: 0.5rem; align-items: center;">
+              <span class="q-diff-badge ${normDiff.toLowerCase()}">${normDiff} (${maxM}M)</span>
+              ${isHint ? '<span class="status-pill warning" style="font-size: 0.7rem;"><i class="fa-solid fa-lightbulb"></i> Hint Used (-1M Penalty)</span>' : ''}
+            </div>
+          </div>
+          <div style="color: ${item.isCorrect ? 'var(--success)' : 'var(--danger)'}; font-weight: 800; font-size: 0.95rem;">
+            ${item.isCorrect ? `<i class="fa-solid fa-circle-check"></i> Correct (+${mAwarded} Mark${mAwarded === 1 ? '' : 's'})` : '<i class="fa-solid fa-circle-xmark"></i> Incorrect (0 Marks)'}
           </div>
         </div>
         <div class="answer-comparison">
@@ -1143,7 +1377,7 @@ async function finalizeExamSubmission() {
           </div>
         </div>
         <div class="explanation-box">
-          <i class="fa-solid fa-lightbulb" style="color: var(--warning);"></i> <strong>Explanation:</strong> ${item.explanation}
+          <i class="fa-solid fa-lightbulb" style="color: var(--warning);"></i> <strong>Explanation:</strong> ${item.explanation || q.explanation || 'Key subject principle.'}
         </div>
       `;
       breakdownContainer.appendChild(reviewCard);
@@ -1152,15 +1386,43 @@ async function finalizeExamSubmission() {
     // Client-side Fallback calculation
     currentQuestions.forEach((q, idx) => {
       const studentAns = userAnswers[idx];
+      const isHintUsed = Boolean(hintsUsedFlags[idx]);
+      if (isHintUsed) hintsUsedTotal++;
+
+      const diffStr = q.difficulty || (idx % 3 === 0 ? 'Easy' : (idx % 3 === 1 ? 'Medium' : 'Hard'));
+      const diffUpper = String(diffStr).trim().toUpperCase();
+      let normDiff = 'Medium';
+      let baseMarks = 2;
+
+      if (diffUpper === 'EASY') {
+        normDiff = 'Easy';
+        baseMarks = 1;
+        easyCount++;
+      } else if (diffUpper === 'HARD') {
+        normDiff = 'Hard';
+        baseMarks = 2;
+        hardCount++;
+      } else {
+        normDiff = 'Medium';
+        baseMarks = 2;
+        mediumCount++;
+      }
+
+      totalMaxMarks += baseMarks;
+      const availMarks = isHintUsed ? Math.max(0, baseMarks - 1) : baseMarks;
       const isCorrect = studentAns === q.correct;
+      let marksAwarded = 0;
 
       if (isCorrect) {
         correctCount++;
+        marksAwarded = availMarks;
+        totalMarksObtained += marksAwarded;
       } else {
         wrongCount++;
+        marksAwarded = 0;
       }
 
-      const studentAnsText = studentAns !== null ? `${labels[studentAns]}. ${q.options[studentAns]}` : '<span style="color: var(--warning);">Not Answered</span>';
+      const studentAnsText = studentAns !== null && studentAns !== undefined ? `${labels[studentAns]}. ${q.options[studentAns]}` : '<span style="color: var(--warning);">Not Answered</span>';
       const correctAnsText = `${labels[q.correct]}. ${q.options[q.correct]}`;
 
       const reviewCard = document.createElement('div');
@@ -1168,9 +1430,15 @@ async function finalizeExamSubmission() {
 
       reviewCard.innerHTML = `
         <div class="review-item-header">
-          <div>Q${idx + 1}. ${q.question}</div>
-          <div style="color: ${isCorrect ? 'var(--success)' : 'var(--danger)'}; font-weight: 700;">
-            ${isCorrect ? '<i class="fa-solid fa-circle-check"></i> Correct (+1)' : '<i class="fa-solid fa-circle-xmark"></i> Incorrect (0)'}
+          <div>
+            <strong>Q${idx + 1}. ${q.question}</strong>
+            <div style="margin-top: 0.35rem; display: flex; gap: 0.5rem; align-items: center;">
+              <span class="q-diff-badge ${normDiff.toLowerCase()}">${normDiff} (${baseMarks}M)</span>
+              ${isHintUsed ? '<span class="status-pill warning" style="font-size: 0.7rem;"><i class="fa-solid fa-lightbulb"></i> Hint Used (-1M Penalty)</span>' : ''}
+            </div>
+          </div>
+          <div style="color: ${isCorrect ? 'var(--success)' : 'var(--danger)'}; font-weight: 800; font-size: 0.95rem;">
+            ${isCorrect ? `<i class="fa-solid fa-circle-check"></i> Correct (+${marksAwarded} Mark${marksAwarded === 1 ? '' : 's'})` : '<i class="fa-solid fa-circle-xmark"></i> Incorrect (0 Marks)'}
           </div>
         </div>
         <div class="answer-comparison">
@@ -1184,7 +1452,7 @@ async function finalizeExamSubmission() {
           </div>
         </div>
         <div class="explanation-box">
-          <i class="fa-solid fa-lightbulb" style="color: var(--warning);"></i> <strong>Explanation:</strong> ${q.explanation}
+          <i class="fa-solid fa-lightbulb" style="color: var(--warning);"></i> <strong>Explanation:</strong> ${q.explanation || 'Key subject principle.'}
         </div>
       `;
       breakdownContainer.appendChild(reviewCard);
@@ -1192,8 +1460,9 @@ async function finalizeExamSubmission() {
   }
 
   const totalQ = backendResultDoc ? backendResultDoc.totalQuestions : currentQuestions.length;
-  const percentage = backendResultDoc ? backendResultDoc.percentage : Math.round((correctCount / totalQ) * 100);
+  const percentage = backendResultDoc ? backendResultDoc.percentage : (totalMaxMarks > 0 ? Math.round((totalMarksObtained / totalMaxMarks) * 100) : 0);
   const isPass = percentage >= 40;
+  const displayMarksObtained = backendResultDoc ? backendResultDoc.marksObtained : `${totalMarksObtained} / ${totalMaxMarks}`;
 
   // Render Result Cards
   document.getElementById('res-student-name').innerText = currentStudent.name;
@@ -1201,9 +1470,19 @@ async function finalizeExamSubmission() {
   document.getElementById('res-subject-name').innerText = selectedSubject;
 
   document.getElementById('res-total-q').innerText = totalQ;
+
+  const diffBreakdownEl = document.getElementById('res-diff-breakdown');
+  if (diffBreakdownEl) diffBreakdownEl.innerText = `${easyCount}E / ${mediumCount}M / ${hardCount}H`;
+
+  const hintsCountEl = document.getElementById('res-hints-count');
+  if (hintsCountEl) hintsCountEl.innerText = hintsUsedTotal;
+
+  const maxMarksEl = document.getElementById('res-max-marks');
+  if (maxMarksEl) maxMarksEl.innerText = backendResultDoc ? backendResultDoc.maximumMarks || totalMaxMarks : totalMaxMarks;
+
   document.getElementById('res-correct-count').innerText = correctCount;
   document.getElementById('res-wrong-count').innerText = wrongCount;
-  document.getElementById('res-marks-obtained').innerText = `${correctCount} / ${totalQ}`;
+  document.getElementById('res-marks-obtained').innerText = displayMarksObtained;
   document.getElementById('res-percentage').innerText = `${percentage}%`;
 
   const statusBadge = document.getElementById('result-status-badge');
@@ -1418,7 +1697,7 @@ function switchAdminSection(sectionName) {
   else if (sectionName === 'schedules') loadAdminSchedules();
   else if (sectionName === 'questions') loadAdminQuestionBank();
   else if (sectionName === 'students') loadAdminStudentsRoster();
-  else if (sectionName === 'results') loadAdminResultsTable();
+  else if (sectionName === 'results') loadFacultyResultsTable();
   else if (sectionName === 'security') loadAdminSecurityReports();
   else if (sectionName === 'participation') loadExamParticipationStatus();
 }
@@ -1725,9 +2004,40 @@ function openAddQuestionModal() {
   if (modal) modal.classList.add('active');
 }
 
+function handleDifficultyChangeUI() {
+  const diffEl = document.getElementById('qe-difficulty');
+  const marksEl = document.getElementById('qe-marks');
+  if (!diffEl || !marksEl) return;
+
+  const diffUpper = diffEl.value.toString().trim().toUpperCase();
+  if (diffUpper === 'EASY') {
+    marksEl.value = 1;
+  } else if (diffUpper === 'HARD') {
+    marksEl.value = 2;
+  } else {
+    marksEl.value = 2;
+  }
+}
+
 function openEditQuestionModal(id) {
   const q = allQuestionBankList.find(item => item._id === id);
   if (!q) return;
+
+  const diffStr = q.difficulty || 'Medium';
+  const diffUpper = String(diffStr).trim().toUpperCase();
+  let normDiff = 'Medium';
+  let normMarks = 2;
+
+  if (diffUpper === 'EASY') {
+    normDiff = 'Easy';
+    normMarks = 1;
+  } else if (diffUpper === 'HARD') {
+    normDiff = 'Hard';
+    normMarks = 2;
+  } else {
+    normDiff = 'Medium';
+    normMarks = 2;
+  }
 
   document.getElementById('qe-id').value = q._id;
   document.getElementById('qe-modal-title').innerText = 'Edit Question';
@@ -1738,8 +2048,8 @@ function openEditQuestionModal(id) {
   document.getElementById('qe-opt-c').value = q.options[2] || '';
   document.getElementById('qe-opt-d').value = q.options[3] || '';
   document.getElementById('qe-correct').value = q.correct || 0;
-  document.getElementById('qe-difficulty').value = q.difficulty || 'MEDIUM';
-  document.getElementById('qe-marks').value = q.marks || 1;
+  document.getElementById('qe-difficulty').value = normDiff;
+  document.getElementById('qe-marks').value = normMarks;
   document.getElementById('qe-hint').value = q.hint || '';
 
   const modal = document.getElementById('question-editor-modal');
@@ -2038,7 +2348,7 @@ function returnToDashboard() {
   }
 }
 
-// Opening Animation Controller
+// Opening Animation Controller (1.3x Speed: ~3.33s Total)
 let introDismissed = false;
 let introTimer = null;
 
@@ -2048,10 +2358,10 @@ function runIntroAnimation() {
 
   introDismissed = false;
 
-  // Auto dismiss after 4.0 seconds (exact requested animation duration)
+  // Auto dismiss after 3.08 seconds at 1.3x speed (0.25s fade-out completes at ~3.33 seconds total)
   introTimer = setTimeout(() => {
     dismissIntro();
-  }, 4000);
+  }, 3080);
 
   // Esc/Space/Enter key listener to skip intro
   window.addEventListener('keydown', handleIntroKeyPress);
@@ -2084,16 +2394,310 @@ function dismissIntro() {
       if (studentInput) {
         studentInput.focus();
       }
-    }, 450);
+    }, 250);
   }
 }
 
-// Logout Handler
-function handleLogout() {
-  isLoggedIn = false;
-  clearInterval(timerInterval);
-  removeSecurityEventListeners();
-  showPage('login-page');
+// ==========================================================================
+// FACULTY RESULT MANAGEMENT & SECURE EXCEL EXPORT LOGIC
+// ==========================================================================
+
+async function loadFacultyResultsTable() {
+  const tbody = document.getElementById('admin-results-table-body');
+  if (!tbody) return;
+
+  const currentFacultyId = facultyUser?.id || 'FACULTY01';
+  const isMasterAdmin = facultyUser?.role === 'ADMIN';
+
+  // Toggle Admin Permission Control button
+  const adminBtn = document.getElementById('btn-admin-manage-perms');
+  if (adminBtn) {
+    adminBtn.style.display = isMasterAdmin ? 'inline-flex' : 'none';
+  }
+
+  // Populate Subject Filter Options based on Faculty Assignment Scope
+  const subjectSelect = document.getElementById('fac-filter-subject');
+  if (subjectSelect && facultyUser && facultyUser.role === 'FACULTY' && Array.isArray(facultyUser.assignedSubjects) && facultyUser.assignedSubjects.length > 0) {
+    const currentVal = subjectSelect.value;
+    subjectSelect.innerHTML = `<option value="ALL">All Authorized Subjects (${facultyUser.assignedSubjects.length})</option>` +
+      facultyUser.assignedSubjects.map(s => `<option value="${s}">${s}</option>`).join('');
+    if (facultyUser.assignedSubjects.includes(currentVal)) {
+      subjectSelect.value = currentVal;
+    }
+  }
+
+  const subject = document.getElementById('fac-filter-subject')?.value || 'ALL';
+  const year = document.getElementById('fac-filter-year')?.value || 'ALL';
+  const section = document.getElementById('fac-filter-section')?.value || 'ALL';
+  const status = document.getElementById('fac-filter-status')?.value || 'ALL';
+  const search = document.getElementById('fac-search-input')?.value || '';
+
+  tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; padding: 2rem;">Loading examination results from secure server...</td></tr>';
+
+  try {
+    // 1. Fetch Summary KPI Metrics
+    const summaryRes = await fetch(`${API_BASE_URL}/results/faculty/summary`, {
+      headers: { 'x-faculty-id': currentFacultyId }
+    });
+    const summaryData = await summaryRes.json();
+    if (summaryData.success && summaryData.summary) {
+      document.getElementById('fac-kpi-total-submissions').innerText = summaryData.summary.totalSubmissions || 0;
+      document.getElementById('fac-kpi-pass-count').innerText = summaryData.summary.passCount || 0;
+      document.getElementById('fac-kpi-fail-count').innerText = summaryData.summary.failCount || 0;
+      document.getElementById('fac-kpi-avg-marks').innerText = `${summaryData.summary.averageMarks || 0}%`;
+
+      const retryBtn = document.getElementById('btn-retry-excel-sync');
+      if (retryBtn) {
+        if (summaryData.summary.pendingExcelSyncCount > 0) {
+          retryBtn.style.color = 'var(--warning)';
+          retryBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Retry Sync (${summaryData.summary.pendingExcelSyncCount})`;
+        } else {
+          retryBtn.style.color = '';
+          retryBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Retry Sync`;
+        }
+      }
+    }
+
+    // 2. Fetch Filtered Result Records
+    const url = `${API_BASE_URL}/results/faculty/all?subject=${encodeURIComponent(subject)}&year=${encodeURIComponent(year)}&section=${encodeURIComponent(section)}&status=${encodeURIComponent(status)}&search=${encodeURIComponent(search)}`;
+    const res = await fetch(url, {
+      headers: { 'x-faculty-id': currentFacultyId }
+    });
+
+    if (res.status === 403) {
+      const err = await res.json();
+      tbody.innerHTML = `<tr><td colspan="12" style="text-align: center; color: var(--danger); font-weight: 700; padding: 2rem;">⛔ ${err.message || 'Access Denied. Faculty Authorization Required.'}</td></tr>`;
+      return;
+    }
+
+    const data = await res.json();
+    if (!data.success || !Array.isArray(data.results) || data.results.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="13" style="text-align: center; color: var(--text-muted); padding: 2rem;">No examination results found matching the selected filters.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = data.results.map((r, idx) => {
+      const statusClass = r.status === 'PASS' ? 'pass' : 'fail';
+      const syncStatusBadge = r.excelSynced !== false 
+        ? '<span class="status-pill pass" title="Result successfully stored in Excel workbook"><i class="fa-solid fa-check"></i> Synced</span>'
+        : '<span class="status-pill fail" title="Excel write pending/locked"><i class="fa-solid fa-clock"></i> Pending</span>';
+
+      const easyCount = r.easyCount !== undefined ? r.easyCount : 0;
+      const mediumCount = r.mediumCount !== undefined ? r.mediumCount : 0;
+      const hardCount = r.hardCount !== undefined ? r.hardCount : 0;
+      const hintsUsed = r.hintsUsed !== undefined ? r.hintsUsed : 0;
+
+      return `
+        <tr>
+          <td><strong>${idx + 1}</strong></td>
+          <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--primary);">${r.regNo}</td>
+          <td style="font-weight: 700;">${r.studentName}</td>
+          <td>${r.year || 'III B.Tech'} - ${r.section || 'A'}</td>
+          <td>${r.subject}</td>
+          <td><span style="font-size: 0.8rem; font-weight: 600;">${easyCount}E / ${mediumCount}M / ${hardCount}H</span></td>
+          <td><span style="font-weight: 700; color: ${hintsUsed > 0 ? 'var(--warning)' : 'inherit'};">${hintsUsed}</span></td>
+          <td><strong>${r.marksObtained}</strong></td>
+          <td>${r.percentage}%</td>
+          <td><span class="status-pill ${statusClass}">${r.status}</span></td>
+          <td><span style="font-size: 0.8rem;">Switch: ${r.tabSwitchCount || 0} | FS: ${r.fullscreenExitCount || 0}</span></td>
+          <td>${syncStatusBadge}</td>
+          <td style="font-size: 0.8rem; color: var(--text-muted);">${r.submittedAt ? new Date(r.submittedAt).toLocaleString() : '—'}</td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error('Load faculty results error:', err);
+    tbody.innerHTML = `<tr><td colspan="13" style="text-align: center; color: var(--danger); padding: 2rem;">Error loading results: ${err.message}</td></tr>`;
+  }
+}
+
+function filterFacultyResultsUI() {
+  loadFacultyResultsTable();
+}
+
+// Download Excel File for Authorized Faculty Subject
+async function downloadFacultyExcel() {
+  const currentFacultyId = facultyUser?.id || 'FACULTY01';
+  const subject = document.getElementById('fac-filter-subject')?.value || 'ALL';
+
+  try {
+    const url = `${API_BASE_URL}/results/faculty/export?subject=${encodeURIComponent(subject)}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'x-faculty-id': currentFacultyId }
+    });
+
+    if (response.status === 403) {
+      const err = await response.json();
+      alert(`⛔ ${err.message || 'Access denied. You are not authorized for this subject.'}`);
+      return;
+    }
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ message: 'No results found to export.' }));
+      alert(`⚠️ ${err.message}`);
+      return;
+    }
+
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = `ALIET_${(subject || 'Exam').replace(/\s+/g, '_')}_Results.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(blobUrl);
+
+    console.log(`📊 Successfully downloaded Excel result sheet for ${subject}`);
+  } catch (err) {
+    console.error('Download Excel error:', err);
+    alert('Failed to download Excel file: ' + err.message);
+  }
+}
+
+// Export Filtered Results to Excel
+async function exportFilteredFacultyResults() {
+  const currentFacultyId = facultyUser?.id || 'FACULTY01';
+  const subject = document.getElementById('fac-filter-subject')?.value || 'ALL';
+  const year = document.getElementById('fac-filter-year')?.value || 'ALL';
+  const section = document.getElementById('fac-filter-section')?.value || 'ALL';
+  const status = document.getElementById('fac-filter-status')?.value || 'ALL';
+  const search = document.getElementById('fac-search-input')?.value || '';
+
+  try {
+    const url = `${API_BASE_URL}/results/faculty/export?subject=${encodeURIComponent(subject)}&year=${encodeURIComponent(year)}&section=${encodeURIComponent(section)}&status=${encodeURIComponent(status)}&search=${encodeURIComponent(search)}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'x-faculty-id': currentFacultyId }
+    });
+
+    if (response.status === 403) {
+      const err = await response.json();
+      alert(`⛔ ${err.message || 'Access denied. You are not authorized for this subject.'}`);
+      return;
+    }
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ message: 'No results found to export.' }));
+      alert(`⚠️ ${err.message}`);
+      return;
+    }
+
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = `ALIET_Filtered_Exam_Results_${Date.now().toString().slice(-4)}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(blobUrl);
+
+    console.log(`📊 Successfully exported filtered Excel result dataset`);
+  } catch (err) {
+    console.error('Export filtered results error:', err);
+    alert('Failed to export filtered results: ' + err.message);
+  }
+}
+
+// Retry Failed Excel Writes
+async function retryExcelSync() {
+  const currentFacultyId = facultyUser?.id || 'FACULTY01';
+  try {
+    const res = await fetch(`${API_BASE_URL}/results/faculty/retry-sync`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'x-faculty-id': currentFacultyId 
+      }
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert(`🎉 ${data.message}`);
+      loadFacultyResultsTable();
+    } else {
+      alert(`⚠️ ${data.message}`);
+    }
+  } catch (err) {
+    console.error('Retry sync error:', err);
+    alert('Retry sync error: ' + err.message);
+  }
+}
+
+// Admin Faculty Permission Control Modal
+function openFacultyPermissionsModal() {
+  const modal = document.getElementById('faculty-permissions-modal');
+  if (modal) {
+    modal.classList.add('active');
+    loadSelectedFacultyPermissions();
+  }
+}
+
+function closeFacultyPermissionsModal() {
+  const modal = document.getElementById('faculty-permissions-modal');
+  if (modal) modal.classList.remove('active');
+}
+
+function loadSelectedFacultyPermissions() {
+  const facultyId = document.getElementById('fp-faculty-select')?.value || 'FACULTY01';
+  
+  // Set checkboxes based on selected faculty member
+  const cn = document.getElementById('fp-subj-cn');
+  const fa = document.getElementById('fp-subj-fa');
+  const dw = document.getElementById('fp-subj-dw');
+  const fc = document.getElementById('fp-subj-fc');
+  const qc = document.getElementById('fp-subj-qc');
+
+  if (facultyId === 'FACULTY01') {
+    if (cn) cn.checked = true;
+    if (fa) fa.checked = true;
+    if (dw) dw.checked = true;
+    if (fc) fc.checked = true;
+    if (qc) qc.checked = true;
+  } else if (facultyId === 'FACULTY_CN') {
+    if (cn) cn.checked = true;
+    if (fa) fa.checked = true;
+    if (dw) dw.checked = false;
+    if (fc) fc.checked = false;
+    if (qc) qc.checked = false;
+  } else if (facultyId === 'FACULTY_DW') {
+    if (cn) cn.checked = false;
+    if (fa) fa.checked = false;
+    if (dw) dw.checked = true;
+    if (fc) fc.checked = true;
+    if (qc) qc.checked = false;
+  }
+}
+
+async function saveFacultyPermissions() {
+  const facultyRegNo = document.getElementById('fp-faculty-select')?.value;
+  const assignedSubjects = [];
+
+  if (document.getElementById('fp-subj-cn')?.checked) assignedSubjects.push('Computer Networks');
+  if (document.getElementById('fp-subj-fa')?.checked) assignedSubjects.push('Finite Automata');
+  if (document.getElementById('fp-subj-dw')?.checked) assignedSubjects.push('Data Warehouse and Data Mining');
+  if (document.getElementById('fp-subj-fc')?.checked) assignedSubjects.push('Fundamentals of Computing');
+  if (document.getElementById('fp-subj-qc')?.checked) assignedSubjects.push('Quantum Computing');
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/admin/faculty/permissions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ facultyRegNo, assignedSubjects })
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert(`🎉 ${data.message}`);
+      closeFacultyPermissionsModal();
+      loadFacultyResultsTable();
+    } else {
+      alert(`⚠️ ${data.message}`);
+    }
+  } catch (err) {
+    console.error('Save faculty permissions error:', err);
+    alert('Save permissions error: ' + err.message);
+  }
 }
 
 // Initialize application on page load

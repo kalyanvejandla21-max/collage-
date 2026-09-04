@@ -33,17 +33,35 @@ const questionSchema = new mongoose.Schema({
   },
   difficulty: {
     type: String,
-    enum: ['EASY', 'MEDIUM', 'HARD'],
-    default: 'MEDIUM'
+    enum: ['Easy', 'Medium', 'Hard', 'EASY', 'MEDIUM', 'HARD'],
+    default: 'Medium'
   },
   marks: {
     type: Number,
-    default: 1
+    default: 2
   },
   hint: {
     type: String,
     default: ''
   }
 }, { timestamps: true });
+
+// Pre-save hook to normalize difficulty to TitleCase and auto-assign marks
+questionSchema.pre('save', function(next) {
+  if (this.difficulty) {
+    const diffUpper = String(this.difficulty).trim().toUpperCase();
+    if (diffUpper === 'EASY') {
+      this.difficulty = 'Easy';
+      this.marks = 1;
+    } else if (diffUpper === 'HARD') {
+      this.difficulty = 'Hard';
+      this.marks = 2;
+    } else {
+      this.difficulty = 'Medium';
+      this.marks = 2;
+    }
+  }
+  next();
+});
 
 module.exports = mongoose.model('Question', questionSchema);
