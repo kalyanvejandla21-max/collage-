@@ -74,9 +74,9 @@ connectDB().then(async () => {
         examId: 'EXAM_CN_001',
         subject: 'Computer Networks',
         examDate: today,
-        startTime: '10:00 AM',
-        latestAllowedStartTime: '10:05 AM',
-        endTime: '10:35 AM',
+        startTime: '06:00 AM',
+        latestAllowedStartTime: '11:59 PM',
+        endTime: '11:59 PM',
         durationMinutes: 30,
         totalQuestions: 20,
         easyCount: 5,
@@ -87,17 +87,17 @@ connectDB().then(async () => {
       { upsert: true, new: true }
     );
 
-    // Seed Quantum Computing Schedule (Tomorrow / Upcoming)
+    // Seed Quantum Computing Schedule (Today / Active)
     await ExamSchedule.findOneAndUpdate(
       { examId: 'EXAM_QC_002' },
       {
         examName: 'Quantum Computing Fundamentals',
         examId: 'EXAM_QC_002',
         subject: 'Quantum Computing',
-        examDate: tomorrow,
-        startTime: '10:00 AM',
-        latestAllowedStartTime: '10:05 AM',
-        endTime: '10:35 AM',
+        examDate: today,
+        startTime: '06:00 AM',
+        latestAllowedStartTime: '11:59 PM',
+        endTime: '11:59 PM',
         durationMinutes: 30,
         totalQuestions: 20,
         easyCount: 5,
@@ -108,26 +108,30 @@ connectDB().then(async () => {
       { upsert: true, new: true }
     );
 
-    // Auto-seed Student Master Database if empty
+    // Auto-seed Student Master Database if empty or sync password hashes to roll numbers
     const fs = require('fs');
+    const bcrypt = require('bcryptjs');
     const studentCount = await Student.countDocuments({ role: 'STUDENT' });
     if (studentCount < 10) {
       const masterPath = path.join(__dirname, 'data', 'students_master.json');
       if (fs.existsSync(masterPath)) {
         const masterList = JSON.parse(fs.readFileSync(masterPath, 'utf8'));
-        const docs = masterList.map(s => ({
-          regNo: s.regNo || s.hallticket,
-          name: s.name,
-          department: s.department || 'CSE',
-          course: s.course || 'B.Tech',
-          year: String(s.year || '3'),
-          semester: String(s.semester || '1'),
-          section: s.section || 'A',
-          photo_url: s.photo_url || '',
-          password: 'password123',
-          role: 'STUDENT',
-          isActive: true
-        }));
+        const docs = masterList.map(s => {
+          const reg = String(s.regNo || s.hallticket).trim().toUpperCase();
+          return {
+            regNo: reg,
+            name: s.name,
+            department: s.department || 'CSE',
+            course: s.course || 'B.Tech',
+            year: String(s.year || '3'),
+            semester: String(s.semester || '1'),
+            section: s.section || 'A',
+            photo_url: s.photo_url || '',
+            passwordHash: bcrypt.hashSync(reg, 10),
+            role: 'STUDENT',
+            isActive: s.isActive !== false
+          };
+        });
         await Student.insertMany(docs);
         console.log(`✅ Auto-seeded ${docs.length} master student records into MongoDB on startup.`);
       }
@@ -139,17 +143,35 @@ connectDB().then(async () => {
   }
 });
 
-// Middleware
-app.use(cors());
+// Enhanced CORS Middleware (Supports local dev, mobile browser connections, Vercel deployments, & custom domains)
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : ['*'];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, curl, server-to-server, same-origin)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    return callback(null, true); // Permissive CORS for student portal access
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+}));
+app.options('*', cors());
+
 app.use(express.json({ limit: '10mb' }));
 
-// SERVER-SIDE SECURITY: Block direct HTTP requests for Excel files & results directory
+// SERVER-SIDE SECURITY: Block direct HTTP requests for Excel files, results directory & student credential files
 app.use((req, res, next) => {
   const reqPath = req.path.toLowerCase();
-  if (reqPath.endsWith('.xlsx') || reqPath.includes('/data/results') || reqPath.includes('/excel_results')) {
+  if (reqPath.endsWith('.xlsx') || reqPath.includes('/data/results') || reqPath.includes('/excel_results') || reqPath.includes('/data/credentials') || reqPath.includes('student_credentials')) {
     return res.status(403).json({
       success: false,
-      message: 'Access denied. Direct access to Excel result files is forbidden.'
+      message: 'Access denied. Direct access to sensitive Excel or credential files is forbidden.'
     });
   }
   next();
@@ -185,11 +207,17 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Start Express Listener
-app.listen(PORT, () => {
-  console.log(`====================================================`);
-  console.log(`🚀 Node.js Express Backend running on port ${PORT}`);
-  console.log(`🔗 API Base URL: http://localhost:${PORT}/api`);
-  console.log(`🔒 Admin Route: http://localhost:${PORT}/admin`);
-  console.log(`====================================================`);
-});
+// Start Express Listener (Runs on local dev or standalone node process)
+if (require.main === module || process.env.VERCEL !== '1') {
+  app.listen(PORT, () => {
+    console.log(`====================================================`);
+    console.log(`🚀 Node.js Express Backend running on port ${PORT}`);
+    console.log(`🔗 API Base URL: http://localhost:${PORT}/api`);
+    console.log(`🔒 Admin Route: http://localhost:${PORT}/admin`);
+    console.log(`====================================================`);
+  });
+}
+
+// Export Express app for Vercel Serverless Function deployment
+module.exports = app;
+

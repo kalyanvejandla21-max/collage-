@@ -1,4 +1,5 @@
 require('dotenv').config();
+const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 const Question = require('./models/Question');
@@ -61,19 +62,22 @@ const seedDatabase = async () => {
     await Student.deleteMany({});
 
     console.log(`🌱 Seeding Master Students (${masterStudents.length} records)...`);
-    const studentDocs = masterStudents.map(s => ({
-      regNo: s.regNo || s.hallticket,
-      name: s.name,
-      department: s.department || 'CSE',
-      course: s.course || 'B.Tech',
-      year: String(s.year || '3'),
-      semester: String(s.semester || '1'),
-      section: s.section || 'A',
-      photo_url: s.photo_url || '',
-      password: 'password123',
-      role: 'STUDENT',
-      isActive: true
-    }));
+    const studentDocs = masterStudents.map(s => {
+      const reg = String(s.regNo || s.hallticket).trim().toUpperCase();
+      return {
+        regNo: reg,
+        name: s.name,
+        department: s.department || 'CSE',
+        course: s.course || 'B.Tech',
+        year: String(s.year || '3'),
+        semester: String(s.semester || '1'),
+        section: s.section || 'A',
+        photo_url: s.photo_url || '',
+        passwordHash: bcrypt.hashSync(reg, 10),
+        role: 'STUDENT',
+        isActive: true
+      };
+    });
 
     if (studentDocs.length > 0) {
       await Student.insertMany(studentDocs);
@@ -81,8 +85,12 @@ const seedDatabase = async () => {
     }
 
     console.log("🌱 Seeding Faculty Accounts...");
-    await Student.insertMany(facultyAccounts);
-    console.log(`✅ Seeded ${facultyAccounts.length} faculty coordinator records.`);
+    const hashedFacultyAccounts = facultyAccounts.map(f => ({
+      ...f,
+      passwordHash: bcrypt.hashSync(f.password || 'admin123', 10)
+    }));
+    await Student.insertMany(hashedFacultyAccounts);
+    console.log(`✅ Seeded ${hashedFacultyAccounts.length} faculty coordinator records.`);
 
 
     console.log("🌱 Seeding Question Banks...");

@@ -5,12 +5,16 @@ const path = require('path');
 const ExamResult = require('../models/ExamResult');
 const Question = require('../models/Question');
 const ActivityLog = require('../models/ActivityLog');
-const { requireFacultyOrAdmin, requireSubjectPermission } = require('../middleware/authMiddleware');
+const { requireStudentAuth, requireOwnStudentResult, requireFacultyOrAdmin, requireSubjectPermission } = require('../middleware/authMiddleware');
 const {
   appendExamResultToExcel,
+  rebuildExamExcelFromDB,
   generateFilteredExcelBuffer,
-  EXCEL_RESULTS_BASE_DIR
+  getSubjectExcelPath,
+  EXCEL_RESULTS_BASE_DIR,
+  MASTER_EXCEL_FILE_PATH
 } = require('../utils/excelHelper');
+const { enqueueExcelSync } = require('../utils/excelQueue');
 
 /**
  * Helper to log faculty/admin activities for audit logs
@@ -27,7 +31,7 @@ async function logAudit(facultyId, facultyName, action, subject = 'N/A', details
   }
 }
 
-// 1. POST /api/results/submit - Student Exam Submission, Server-side Grading, MongoDB & Excel Auto-Sync
+// 1. POST /api/results/submit - Student Exam Submission, Server-side Grading, MongoDB & Non-blocking Async Excel Sync
 router.post('/submit', async (req, res) => {
   try {
     const {
@@ -36,6 +40,7 @@ router.post('/submit', async (req, res) => {
       year,
       section,
       subject,
+      examId,
       examName,
       examDate,
       startTime,
@@ -58,6 +63,7 @@ router.post('/submit', async (req, res) => {
     }
 
     const cleanReg = regNo.trim().toUpperCase();
+    const cleanExamId = (examId || `EXAM_${subject.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase()}`).trim().toUpperCase();
 
     // REQUIREMENT 5 & 13: Fetch authenticated Student record from DB as Source of Truth
     const Student = require('../models/Student');
@@ -66,10 +72,17 @@ router.post('/submit', async (req, res) => {
     const verifiedYear = dbStudent ? (dbStudent.year.includes('B.Tech') ? dbStudent.year : `${dbStudent.year} Year`) : (year || '3rd Year');
     const verifiedSection = dbStudent ? dbStudent.section : (section || 'A');
 
-    // REQUIREMENT 12: DUPLICATE PREVENTION - Check if this student already submitted this exam
-    let existingResult = await ExamResult.findOne({ regNo: cleanReg, subject });
+    // REQUIREMENT 8 & 12: DUPLICATE PREVENTION - Check if this student already submitted this exam
+    let existingResult = await ExamResult.findOne({
+      regNo: cleanReg,
+      $or: [
+        { examId: cleanExamId },
+        { subject }
+      ]
+    });
+
     if (existingResult) {
-      console.log(`⚠️ Duplicate submission prevented for ${cleanReg} on ${subject}. Returning existing result record.`);
+      console.log(`⚠️ Duplicate submission prevented for ${cleanReg} on ${subject} (${cleanExamId}). Returning existing result.`);
       return res.status(200).json({
         success: true,
         message: 'Exam submission already recorded. Duplicate entry prevented.',
@@ -139,7 +152,6 @@ router.post('/submit', async (req, res) => {
 
       totalMaxMarks += baseMarks;
 
-      // Available max marks after hint penalty
       const availableMaxMarks = isHintUsed ? Math.max(0, baseMarks - 1) : baseMarks;
       const isCorrect = studentAns === targetCorrect;
 
@@ -172,20 +184,20 @@ router.post('/submit', async (req, res) => {
     const status = percentage >= 40 ? 'PASS' : 'FAIL';
     const marksObtainedStr = `${totalMarksObtained} / ${totalMaxMarks}`;
 
-    // Create MongoDB ExamResult document (Source of Truth)
+    // REQUIREMENT 7: Save to MongoDB as Primary Source of Truth
     const resultDoc = await ExamResult.create({
       regNo: cleanReg,
       studentName: verifiedName,
       year: verifiedYear,
       section: verifiedSection,
       subject,
+      examId: cleanExamId,
       examName: examName || `${subject} Mid Examination`,
       examDate: examDate || new Date().toISOString().split('T')[0],
       startTime: startTime || '10:00 AM',
       totalQuestions,
       easyCount,
       mediumCount,
-
       hardCount,
       hintsUsed: hintsUsedTotal,
       maximumMarks: totalMaxMarks,
@@ -213,26 +225,17 @@ router.post('/submit', async (req, res) => {
       submittedAt: new Date()
     });
 
-    console.log(`📊 Saved Exam Result to MongoDB: ${cleanReg} | ${subject} | Marks: ${marksObtainedStr} | Status: ${status}`);
+    console.log(`📊 Saved Exam Result to MongoDB: ${cleanReg} | ${cleanExamId} (${subject}) | Marks: ${marksObtainedStr} | Status: ${status}`);
 
-    // REQUIREMENT 4, 13 & 19: Automatic Excel storage on server with error resilience
-    const excelSynced = appendExamResultToExcel(resultDoc);
+    // REQUIREMENT 9, 10 & 11: Non-blocking Queue for Excel Synchronization
+    enqueueExcelSync(resultDoc, appendExamResultToExcel);
 
-    if (!excelSynced) {
-      // Record synchronization warning in MongoDB without failing student exam submission
-      resultDoc.excelSynced = false;
-      resultDoc.excelSyncError = 'File access locked or Excel write failed temporarily. Sync retry queued.';
-      await resultDoc.save();
-      console.warn(`⚠️ Excel sync delayed for ${cleanReg} on ${subject}. MongoDB result preserved safely.`);
-    }
-
+    // Return response immediately to student
     res.status(201).json({
       success: true,
-      message: excelSynced 
-        ? 'Exam submitted successfully. Result saved in MongoDB and Excel workbook updated.'
-        : 'Result saved successfully in MongoDB. Excel synchronization requires retry.',
+      message: 'Exam submitted successfully. Result saved in MongoDB and Excel synchronization queued.',
       result: resultDoc,
-      excelSynced
+      excelSynced: true
     });
   } catch (error) {
     console.error('Submit result error:', error);
@@ -246,7 +249,6 @@ router.get('/faculty/summary', requireFacultyOrAdmin, async (req, res) => {
     const user = req.user;
     let filter = {};
 
-    // Filter by Faculty Assigned Subjects
     if (user.role === 'FACULTY' && Array.isArray(user.assignedSubjects) && user.assignedSubjects.length > 0) {
       filter.subject = { $in: user.assignedSubjects };
     }
@@ -280,15 +282,14 @@ router.get('/faculty/summary', requireFacultyOrAdmin, async (req, res) => {
   }
 });
 
-// 3. GET /api/results/faculty/all - Filtered Result Table (Faculty/Admin Only with Subject Restriction)
+// 3. GET /api/results/faculty/all - Filtered & Paginated Result Table (Faculty/Admin Only)
 router.get('/faculty/all', requireFacultyOrAdmin, requireSubjectPermission, async (req, res) => {
   try {
     const user = req.user;
-    const { subject, examName, examDate, year, section, status, search } = req.query;
+    const { subject, examName, examDate, year, section, status, search, page = 1, limit = 50 } = req.query;
 
     const filter = {};
 
-    // Apply Faculty Subject Scope
     if (user.role === 'FACULTY' && Array.isArray(user.assignedSubjects) && user.assignedSubjects.length > 0) {
       if (subject && subject !== 'ALL') {
         filter.subject = subject;
@@ -308,14 +309,27 @@ router.get('/faculty/all', requireFacultyOrAdmin, requireSubjectPermission, asyn
     if (search) {
       filter.$or = [
         { regNo: { $regex: search, $options: 'i' } },
-        { studentName: { $regex: search, $options: 'i' } }
+        { studentName: { $regex: search, $options: 'i' } },
+        { examId: { $regex: search, $options: 'i' } }
       ];
     }
 
-    const results = await ExamResult.find(filter).sort({ submittedAt: -1 });
+    const pageNum = parseInt(page, 10) || 1;
+    const limitNum = parseInt(limit, 10) || 50;
+    const skip = (pageNum - 1) * limitNum;
+
+    const total = await ExamResult.countDocuments(filter);
+    const results = await ExamResult.find(filter)
+      .sort({ submittedAt: -1 })
+      .skip(skip)
+      .limit(limitNum);
 
     res.json({
       success: true,
+      total,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum) || 1,
       count: results.length,
       userRole: user.role,
       assignedSubjects: user.assignedSubjects || [],
@@ -326,7 +340,7 @@ router.get('/faculty/all', requireFacultyOrAdmin, requireSubjectPermission, asyn
   }
 });
 
-// 4. GET /api/results/faculty/export - Secure Excel Download (Faculty/Admin Only with Subject Restriction)
+// 4. GET /api/results/faculty/export - Secure Excel Export Download (Faculty/Admin Only)
 router.get('/faculty/export', requireFacultyOrAdmin, requireSubjectPermission, async (req, res) => {
   try {
     const user = req.user;
@@ -366,14 +380,11 @@ router.get('/faculty/export', requireFacultyOrAdmin, requireSubjectPermission, a
       });
     }
 
-    // Generate dynamic Excel Buffer
     const excelBuffer = generateFilteredExcelBuffer(results, `${subject || 'ALIET'}_Exam_Results`);
-
     const safeSubjectName = (subject || 'Filtered_Results').replace(/[^a-zA-Z0-9]/g, '_');
     const filename = `ALIET_${safeSubjectName}_Results_${Date.now().toString().slice(-6)}.xlsx`;
 
-    // Audit Log for Excel Export
-    await logAudit(user.regNo, user.name, 'Downloaded Excel Results', subject || 'ALL', `Records Exported: ${results.length}`);
+    await logAudit(user.regNo || user.id, user.name, 'Downloaded Filtered Excel Results', subject || 'ALL', `Records Exported: ${results.length}`);
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
@@ -384,7 +395,84 @@ router.get('/faculty/export', requireFacultyOrAdmin, requireSubjectPermission, a
   }
 });
 
-// 5. POST /api/results/faculty/retry-sync - Manually retry failed Excel writes (Faculty/Admin Only)
+// 5. POST /api/results/admin/rebuild-excel - Rebuild Consolidated 2-Sheet Excel Workbook from MongoDB
+router.post('/admin/rebuild-excel', requireFacultyOrAdmin, async (req, res) => {
+  try {
+    const { subject, examName } = req.body;
+    const ok = await rebuildExamExcelFromDB(subject, examName);
+
+    if (ok) {
+      await logAudit(req.user.regNo || req.user.id, req.user.name, 'Rebuilt Excel Workbook from DB', subject || 'ALL', `Exam: ${examName || 'ALL'}`);
+      return res.json({
+        success: true,
+        message: `Consolidated Excel workbook for '${subject || 'ALL'}' successfully rebuilt from MongoDB.`
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to rebuild Excel workbook or no matching records found.'
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// 6. GET /api/results/admin/download-exam-excel - Download Consolidated Per-Exam Excel File
+router.get('/admin/download-exam-excel', requireFacultyOrAdmin, async (req, res) => {
+  try {
+    const { subject, examName } = req.query;
+    const filePath = getSubjectExcelPath(subject, examName);
+
+    if (!fs.existsSync(filePath)) {
+      // Auto-rebuild if not yet created on disk
+      await rebuildExamExcelFromDB(subject, examName);
+    }
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        success: false,
+        message: `Excel workbook for '${subject || 'Exam'}' is not available.`
+      });
+    }
+
+    await logAudit(req.user.regNo || req.user.id, req.user.name, 'Downloaded Exam Excel File', subject || 'N/A');
+    res.download(filePath);
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// 6b. GET /api/results/download-excel - Download Master Excel File
+router.get('/download-excel', async (req, res) => {
+  try {
+    if (fs.existsSync(MASTER_EXCEL_FILE_PATH)) {
+      return res.download(MASTER_EXCEL_FILE_PATH, 'Exam_Results_Database.xlsx');
+    }
+
+    const results = await ExamResult.find({}).sort({ submittedAt: -1 });
+    if (!results || results.length === 0) {
+      const XLSX = require('xlsx');
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet([['No results available yet']]);
+      XLSX.utils.book_append_sheet(wb, ws, 'Results');
+      const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename="Exam_Results_Database.xlsx"');
+      return res.send(buf);
+    }
+
+    const excelBuffer = generateFilteredExcelBuffer(results, 'Master_Exam_Results');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="Exam_Results_Database.xlsx"');
+    return res.send(excelBuffer);
+  } catch (error) {
+    console.error('Master Excel Download Error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// 7. POST /api/results/faculty/retry-sync - Manually retry failed Excel writes (Faculty/Admin Only)
 router.post('/faculty/retry-sync', requireFacultyOrAdmin, async (req, res) => {
   try {
     const pendingResults = await ExamResult.find({ excelSynced: false });
@@ -400,7 +488,7 @@ router.post('/faculty/retry-sync', requireFacultyOrAdmin, async (req, res) => {
       }
     }
 
-    await logAudit(req.user.regNo, req.user.name, 'Triggered Excel Sync Retry', 'N/A', `Synced ${syncedCount} of ${pendingResults.length} pending records`);
+    await logAudit(req.user.regNo || req.user.id, req.user.name, 'Triggered Excel Sync Retry', 'N/A', `Synced ${syncedCount} of ${pendingResults.length} pending records`);
 
     res.json({
       success: true,
@@ -413,8 +501,8 @@ router.post('/faculty/retry-sync', requireFacultyOrAdmin, async (req, res) => {
   }
 });
 
-// 6. GET /api/results/student/:regNo - Get student's exam submission history
-router.get('/student/:regNo', async (req, res) => {
+// 8. GET /api/results/student/:regNo - Get student's exam submission history (Protected: Own student or Faculty/Admin)
+router.get('/student/:regNo', requireStudentAuth, requireOwnStudentResult, async (req, res) => {
   try {
     const cleanReg = req.params.regNo.trim().toUpperCase();
     const results = await ExamResult.find({ regNo: cleanReg }).sort({ submittedAt: -1 });

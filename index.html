@@ -11,13 +11,16 @@
   <!-- SheetJS Excel Library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
+  <!-- Anime.js Animation Engine -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+
   <!-- Custom Stylesheet -->
   <link rel="stylesheet" href="styles.css?v=1.5">
 </head>
 <body>
 
-  <!-- 13-Stage Continuous Opening Animation Overlay -->
-  <div id="intro-overlay" class="intro-overlay">
+  <!-- 13-Stage Continuous Opening Animation Overlay (Click anywhere to skip) -->
+  <div id="intro-overlay" class="intro-overlay" onclick="dismissIntro()" title="Click anywhere to skip intro">
     <div class="intro-content">
       
       <!-- Central Stage (Icons & Logos) -->
@@ -162,16 +165,12 @@
       </div>
       <div class="header-right-group">
         <div class="user-badge" id="header-user-badge" style="display: none; cursor: pointer;" onclick="handleLogout()" title="Click to Logout">
-          <div class="avatar-frame">
-            <img id="header-student-photo" src="" alt="Student Photo" class="header-user-photo" style="display: none;" onerror="this.style.display='none'; document.getElementById('avatar-initials').style.display='flex';">
-            <div class="avatar" id="avatar-initials">K</div>
-          </div>
           <div class="user-info">
             <div class="user-name-wrapper">
-              <span class="user-name" id="header-student-name">Kalyan</span>
+              <span class="user-name" id="header-student-name">Student</span>
               <span class="user-dept-badge" id="header-student-dept">CSE</span>
             </div>
-            <div class="user-reg" id="header-student-reg">23A91A0501</div>
+            <div class="user-reg" id="header-student-reg">Registration ID</div>
           </div>
         </div>
         <button type="button" class="btn-secondary" onclick="handleStudentNav()" title="Student Examination Portal">
@@ -189,15 +188,30 @@
   <!-- PAGE 1: STUDENT LOGIN -->
   <main id="login-page" class="page-view active">
     <div class="login-container">
-      <div class="glass-card login-card dark-glass-glow">
+      <div class="glass-card login-card dark-glass-glow" style="position: relative; overflow: hidden;">
+        
+        <!-- Centered Prominent Anime.js Input Value Animation Overlay -->
+        <div id="auth-displacement-container" class="auth-displacement-container" style="display: none;" aria-hidden="true">
+          <div class="auth-displacement-card">
+            <div class="auth-anim-viewport">
+              <input type="text" id="auth-anim-input" class="auth-anim-input" value="0" readonly aria-label="Authentication animation value">
+            </div>
+            <div class="auth-displacement-text">
+              <span>Authenticating &amp; Verifying Exam Access...</span>
+              <div class="auth-progress-track">
+                <div id="auth-progress-bar" class="auth-progress-bar"></div>
+              </div>
+            </div>
+          </div>
+        </div>
         
         <!-- Prominent Main Page Logo & College Name Below It -->
-        <div class="center-logo-container">
+        <div class="center-logo-container" id="opening-hero-branding">
           <div class="logo-hero-frame">
             <img src="logo.png" alt="Andhra Loyola Institute of Engineering and Technology Crest" class="center-hero-logo">
           </div>
           <h1 class="main-college-title">Andhra Loyola Institute of Engineering and Technology</h1>
-          <p class="main-college-subtitle"><i class="fa-solid fa-graduation-cap"></i> Online Examination Portal</p>
+          <p class="main-college-subtitle"><i class="fa-solid fa-graduation-cap"></i> <span class="subtitle-text-wrapper">Online Examination Portal</span></p>
         </div>
 
         <div class="engineering-badge">
@@ -220,46 +234,46 @@
             <label for="student-id" id="login-id-label"><i class="fa-regular fa-id-card"></i> Student Registration ID</label>
             <div class="input-wrapper">
               <i class="fa-solid fa-user"></i>
-              <input type="text" id="student-id" class="input-control" placeholder="Enter Reg No (e.g. 24HP1A0501)" required oninput="clearLoginError()">
+              <input type="text" id="student-id" class="input-control" value="" placeholder="Enter your Hall Ticket Number" required oninput="lookupStudentRealtime(); clearLoginError();">
             </div>
-            <div class="input-hint-text"><i class="fa-solid fa-circle-info"></i> Enter your registered <strong>Hall Ticket Number</strong> (e.g., 24HP1A0541, 24HP1A4401)</div>
+            <div id="student-id-preview" style="display: none; margin-top: 0.4rem; padding: 0.4rem 0.75rem; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 8px; font-size: 0.82rem; color: #10b981; font-weight: 600;">
+              <i class="fa-solid fa-user-check"></i> <span id="student-preview-text"></span>
+            </div>
+            <div class="input-hint-text"><i class="fa-solid fa-circle-info"></i> Enter your registered <strong>Hall Ticket / Roll Number</strong></div>
           </div>
 
-          <div class="form-group">
-            <label for="password"><i class="fa-solid fa-lock"></i> Account Password</label>
-            <div class="input-wrapper">
-              <i class="fa-solid fa-key"></i>
-              <input type="password" id="password" class="input-control password-input" placeholder="Enter Password" required oninput="validatePasswordRealtime(); clearLoginError();">
-              <button type="button" class="password-toggle-btn" id="toggle-password-btn" onclick="togglePasswordVisibility()" title="Toggle Password Visibility" aria-label="Show or hide password">
-                <i class="fa-solid fa-eye" id="toggle-password-icon"></i>
-              </button>
+            <div class="form-group">
+              <label for="password"><i class="fa-solid fa-lock"></i> Account Password</label>
+              <div class="input-wrapper">
+                <i class="fa-solid fa-key"></i>
+                <input type="password" id="password" class="input-control password-input" value="" placeholder="Enter your password (e.g. 24HP1A0544)" required oninput="validatePasswordRealtime(); clearLoginError();">
+                <button type="button" class="password-toggle-btn" id="toggle-password-btn" onclick="togglePasswordVisibility()" title="Toggle Password Visibility" aria-label="Show or hide password">
+                  <i class="fa-solid fa-eye" id="toggle-password-icon"></i>
+                </button>
+              </div>
+              <div class="input-hint-text" style="margin-top: 0.4rem; font-size: 0.8rem; line-height: 1.4;"><i class="fa-solid fa-circle-info"></i> Default Password: Type your <strong>Hall Ticket Number</strong> (e.g. <code>24HP1A0541</code>)</div>
+
+              <!-- Dynamic Password Format Requirements -->
+              <div class="password-hints-container" id="password-hints" style="margin-top: 0.75rem; display: grid; grid-template-columns: 1fr; gap: 0.4rem; font-size: 0.78rem;">
+                <div class="hint-item invalid" id="hint-length"><i class="fa-solid fa-circle-xmark status-icon"></i> <span>At least 8 characters</span></div>
+                <div class="hint-item invalid" id="hint-upper"><i class="fa-solid fa-circle-xmark status-icon"></i> <span>At least 1 uppercase letter (A-Z)</span></div>
+                <div class="hint-item invalid" id="hint-symbol"><i class="fa-solid fa-circle-xmark status-icon"></i> <span>At least 1 special symbol (@, #, $, !, %, etc.)</span></div>
+              </div>
             </div>
 
-            <!-- Real-time Password Hints Grid -->
-            <div class="password-hints-container" id="password-hints">
-              <div class="hint-item" id="hint-length">
-                <i class="fa-solid fa-circle-xmark status-icon"></i>
-                <span>8+ characters</span>
-              </div>
-              <div class="hint-item" id="hint-upper">
-                <i class="fa-solid fa-circle-xmark status-icon"></i>
-                <span>1 uppercase letter</span>
-              </div>
-              <div class="hint-item" id="hint-symbol">
-                <i class="fa-solid fa-circle-xmark status-icon"></i>
-                <span>1 symbol (@, #, $, !, %, etc.)</span>
-              </div>
-            </div>
-          </div>
+          <button type="submit" id="login-submit-btn" class="btn-primary" style="margin-top: 1.25rem;">
+            <span id="login-submit-btn-text">Authenticate & Enter</span> <i class="fa-solid fa-right-to-bracket" id="login-btn-icon"></i>
+            
 
-          <button type="submit" class="btn-primary" style="margin-top: 1.25rem;">
-            <span id="login-submit-btn-text">Authenticate & Enter</span> <i class="fa-solid fa-right-to-bracket"></i>
           </button>
         </form>
 
-        <div class="demo-hint" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem;">
-          <div><i class="fa-solid fa-user-check"></i> Master Student Database: <strong>800+ Verified Records</strong></div>
-          <button type="button" style="background: none; border: none; color: var(--primary); font-weight: 700; cursor: pointer; text-decoration: underline;" onclick="openAdminModal()">Admin Login</button>
+        <div class="demo-hint" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.25rem;">
+          <div><i class="fa-solid fa-user-check"></i> Master Student Database: <strong>Student database records</strong></div>
+          <div style="display: flex; gap: 0.75rem; align-items: center;">
+            <button type="button" style="background: none; border: none; color: var(--text-muted); font-size: 0.8rem; cursor: pointer; text-decoration: underline;" onclick="promptApiServerUrl()" title="Configure Backend Server Endpoint"><i class="fa-solid fa-gear"></i> Server API</button>
+            <button type="button" style="background: none; border: none; color: var(--primary); font-weight: 700; cursor: pointer; text-decoration: underline;" onclick="openAdminModal()">Admin Login</button>
+          </div>
         </div>
       </div>
     </div>
@@ -277,11 +291,11 @@
           <tbody>
             <tr>
               <td>Student Name</td>
-              <td id="dash-student-name">Kalyan</td>
+              <td id="dash-student-name">Student</td>
             </tr>
             <tr>
               <td>Registration Number</td>
-              <td id="dash-reg-no">23A91A0501</td>
+              <td id="dash-reg-no">Registration ID</td>
             </tr>
             <tr>
               <td>Year / Semester</td>
@@ -341,11 +355,11 @@
         <div class="meta-group">
           <div class="meta-item">
             <span>Candidate Name</span>
-            <strong id="exam-student-name">Kalyan</strong>
+            <strong id="exam-student-name">Student</strong>
           </div>
           <div class="meta-item">
             <span>Reg Number</span>
-            <strong id="exam-reg-no">23A91A0501</strong>
+            <strong id="exam-reg-no">Registration ID</strong>
           </div>
           <div class="meta-item">
             <span>Subject Paper</span>
@@ -474,11 +488,11 @@
           <tbody>
             <tr>
               <td>Student Name</td>
-              <td id="res-student-name">Kalyan</td>
+              <td id="res-student-name">Student</td>
             </tr>
             <tr>
               <td>Registration Number</td>
-              <td id="res-reg-no">23A91A0501</td>
+              <td id="res-reg-no">Registration ID</td>
             </tr>
             <tr>
               <td>Subject Paper</td>
@@ -604,6 +618,9 @@
             </button>
             <button type="button" class="admin-nav-item" id="nav-btn-students" onclick="switchAdminSection('students')">
               <i class="fa-solid fa-users-gear"></i> Student Roster
+            </button>
+            <button type="button" class="admin-nav-item" id="nav-btn-passwords" onclick="switchAdminSection('passwords')">
+              <i class="fa-solid fa-key"></i> Password Management
             </button>
             <button type="button" class="admin-nav-item" id="nav-btn-results" onclick="switchAdminSection('results')">
               <i class="fa-solid fa-trophy"></i> Results Database
@@ -734,17 +751,17 @@
 
                 <div class="form-group">
                   <label><i class="fa-solid fa-clock"></i> Scheduled Start Time</label>
-                  <input type="text" id="ce-start-time" class="input-control" placeholder="e.g. 10:00 AM" value="10:00 AM" required>
+                  <input type="time" id="ce-start-time" class="input-control" value="09:00" required>
                 </div>
 
                 <div class="form-group">
                   <label style="color: var(--danger);"><i class="fa-solid fa-user-clock"></i> Latest Allowed Start Time</label>
-                  <input type="text" id="ce-latest-start-time" class="input-control" placeholder="e.g. 10:05 AM" value="10:05 AM" required>
+                  <input type="time" id="ce-latest-start-time" class="input-control" value="09:30" required>
                 </div>
 
                 <div class="form-group">
                   <label><i class="fa-solid fa-hourglass-end"></i> Examination End Time</label>
-                  <input type="text" id="ce-end-time" class="input-control" placeholder="e.g. 10:35 AM" value="10:35 AM" required>
+                  <input type="time" id="ce-end-time" class="input-control" value="09:30" required>
                 </div>
 
                 <div class="form-group">
@@ -993,6 +1010,9 @@
                   <button type="button" class="btn-secondary" onclick="exportFilteredFacultyResults()" title="Export Currently Filtered Results">
                     <i class="fa-solid fa-file-export"></i> Export Filtered Results
                   </button>
+                  <button type="button" class="btn-secondary" onclick="rebuildExcelFromDB()" title="Rebuild Consolidated Excel Workbook directly from MongoDB">
+                    <i class="fa-solid fa-arrows-rotate"></i> Rebuild Excel from DB
+                  </button>
                   <button type="button" class="btn-secondary" id="btn-retry-excel-sync" onclick="retryExcelSync()" title="Retry Excel Write Synchronization">
                     <i class="fa-solid fa-cloud-arrow-up"></i> Retry Sync
                   </button>
@@ -1065,6 +1085,22 @@
                   <!-- Rendered via JS -->
                 </tbody>
               </table>
+            </div>
+
+            <!-- Server-Side Pagination Bar -->
+            <div class="pagination-bar" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+              <div style="font-size: 0.85rem; color: var(--text-muted);" id="admin-results-pagination-info">
+                Showing 0-0 of 0 records
+              </div>
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <button type="button" class="btn-secondary" id="btn-prev-page" onclick="changeAdminResultsPage(-1)" disabled>
+                  <i class="fa-solid fa-chevron-left"></i> Previous
+                </button>
+                <span style="font-size: 0.85rem; font-weight: 700;" id="admin-results-page-num">Page 1</span>
+                <button type="button" class="btn-secondary" id="btn-next-page" onclick="changeAdminResultsPage(1)" disabled>
+                  Next <i class="fa-solid fa-chevron-right"></i>
+                </button>
+              </div>
             </div>
           </div>
         </section>
@@ -1157,6 +1193,43 @@
                 </thead>
                 <tbody id="part-status-table-body">
                   <!-- Rendered via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- PANE 9: STUDENT PASSWORD & CREDENTIAL MANAGEMENT -->
+        <section id="pane-passwords" class="admin-section-pane">
+          <div class="glass-card">
+            <div class="table-filter-bar" style="flex-wrap: wrap; gap: 0.75rem;">
+              <div class="dashboard-title" style="margin-bottom: 0;">
+                <i class="fa-solid fa-key"></i> Student Credential &amp; Password Management
+              </div>
+
+              <div style="display: flex; gap: 0.75rem; align-items: center; margin-left: auto;">
+                <input type="text" id="admin-pass-search" class="input-control" placeholder="Search Roll No or Name..." style="width: 220px;" onkeyup="if(event.key==='Enter') loadAdminPasswordTable()">
+                <button type="button" class="btn-secondary" onclick="loadAdminPasswordTable()"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+                <button type="button" class="btn-primary" onclick="adminBulkGenerateCredentials()" style="background: linear-gradient(135deg, #10b981, #059669);"><i class="fa-solid fa-bolt"></i> Bulk Generate (800+ Students)</button>
+                <button type="button" class="btn-secondary" onclick="adminDownloadCredentials()"><i class="fa-solid fa-file-excel"></i> Export Excel</button>
+              </div>
+            </div>
+
+            <div class="table-responsive" style="margin-top: 1.25rem;">
+              <table class="admin-data-table">
+                <thead>
+                  <tr>
+                    <th>Registration ID</th>
+                    <th>Student Name</th>
+                    <th>Department / Sec</th>
+                    <th>Account Status</th>
+                    <th>Password Status</th>
+                    <th>Failed Attempts</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-passwords-table-body">
+                  <tr><td colspan="7" style="text-align: center; padding: 2rem;">Loading student credential roster...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -1468,6 +1541,82 @@
           <button type="submit" class="btn-primary" style="flex: 1;"><i class="fa-solid fa-floppy-disk"></i> Update Permissions</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- STUDENT FORCED / VOLUNTARY CHANGE PASSWORD MODAL -->
+  <div class="modal-overlay" id="change-password-modal" style="display: none;">
+    <div class="modal-content dark-glass-glow" style="max-width: 480px; position: relative;">
+      <div style="font-size: 2.2rem; color: var(--primary); margin-bottom: 0.5rem; text-align: center;">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+      <h3 style="text-align: center; margin-bottom: 0.25rem;" id="change-pass-title">Change Account Password</h3>
+      <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;" id="change-pass-subtitle">
+        First-time login requirement: Create a new secure personal password to proceed.
+      </p>
+
+      <div id="change-pass-error" class="login-error-banner" style="display: none; margin-bottom: 1rem;" role="alert">
+        <i class="fa-solid fa-circle-exclamation error-icon"></i>
+        <span id="change-pass-error-msg"></span>
+      </div>
+
+      <form onsubmit="event.preventDefault(); submitPasswordChange();" novalidate>
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label for="cp-current"><i class="fa-solid fa-lock"></i> Current / Temporary Password</label>
+          <input type="password" id="cp-current" class="input-control" placeholder="Enter current temporary password" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label for="cp-new"><i class="fa-solid fa-key"></i> New Password</label>
+          <input type="password" id="cp-new" class="input-control" placeholder="Create new password" required oninput="validateNewPasswordRealtime()">
+
+          <!-- Real-time Password Complexity Rules Grid -->
+          <div class="password-hints-container" id="new-password-hints" style="margin-top: 0.75rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; font-size: 0.78rem;">
+            <div class="hint-item invalid" id="cp-hint-length"><i class="fa-solid fa-circle-xmark status-icon"></i> <span>8+ characters</span></div>
+            <div class="hint-item invalid" id="cp-hint-upper"><i class="fa-solid fa-circle-xmark status-icon"></i> <span>1 uppercase (A-Z)</span></div>
+            <div class="hint-item invalid" id="cp-hint-lower"><i class="fa-solid fa-circle-xmark status-icon"></i> <span>1 lowercase (a-z)</span></div>
+            <div class="hint-item invalid" id="cp-hint-number"><i class="fa-solid fa-circle-xmark status-icon"></i> <span>1 number (0-9)</span></div>
+            <div class="hint-item invalid" id="cp-hint-symbol" style="grid-column: span 2;"><i class="fa-solid fa-circle-xmark status-icon"></i> <span>1 symbol (@, #, $, !, %, etc.)</span></div>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label for="cp-confirm"><i class="fa-solid fa-circle-check"></i> Confirm New Password</label>
+          <input type="password" id="cp-confirm" class="input-control" placeholder="Re-enter new password" required>
+        </div>
+
+        <div class="modal-buttons">
+          <button type="button" class="btn-secondary" id="cp-cancel-btn" style="display: none;" onclick="closeChangePasswordModal()">Cancel</button>
+          <button type="submit" class="btn-primary" style="flex: 1;"><i class="fa-solid fa-floppy-disk"></i> Update Password &amp; Proceed</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADMIN DISPLAY TEMP PASSWORD MODAL -->
+  <div class="modal-overlay" id="admin-temp-pass-modal" style="display: none;">
+    <div class="modal-content" style="max-width: 440px; text-align: center;">
+      <div style="font-size: 2.5rem; color: var(--accent-emerald); margin-bottom: 0.5rem;">
+        <i class="fa-solid fa-key"></i>
+      </div>
+      <h3>Student Password Reset</h3>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+        Temporary credentials generated for <strong id="atp-student-info">Student</strong>
+      </p>
+
+      <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--accent-emerald); padding: 1rem; border-radius: 8px; margin-bottom: 1.25rem;">
+        <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Temporary Password</div>
+        <div id="atp-temp-password" style="font-family: monospace; font-size: 1.6rem; font-weight: 700; color: #10b981; margin-top: 0.25rem; letter-spacing: 2px;"></div>
+      </div>
+
+      <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+        Provide this temporary password to the student. They will be required to change it upon first login.
+      </p>
+
+      <div class="modal-buttons">
+        <button type="button" class="btn-secondary" onclick="copyAdminTempPassword()"><i class="fa-solid fa-copy"></i> Copy Password</button>
+        <button type="button" class="btn-primary" onclick="closeAdminTempPassModal()">Done</button>
+      </div>
     </div>
   </div>
 

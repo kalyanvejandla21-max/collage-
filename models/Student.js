@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 const studentSchema = new mongoose.Schema({
   regNo: {
@@ -43,8 +44,11 @@ const studentSchema = new mongoose.Schema({
     default: ''
   },
   password: {
+    type: String
+  },
+  passwordHash: {
     type: String,
-    default: 'password123'
+    default: ''
   },
   role: {
     type: String,
@@ -54,6 +58,27 @@ const studentSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  mustChangePassword: {
+    type: Boolean,
+    default: true
+  },
+  accountStatus: {
+    type: String,
+    enum: ['ACTIVE', 'INACTIVE', 'LOCKED'],
+    default: 'ACTIVE'
+  },
+  failedLoginAttempts: {
+    type: Number,
+    default: 0
+  },
+  lockedUntil: {
+    type: Date,
+    default: null
+  },
+  passwordChangedAt: {
+    type: Date,
+    default: null
   },
   assignedSubjects: [{
     type: String,
@@ -65,5 +90,36 @@ const studentSchema = new mongoose.Schema({
   }
 });
 
-module.exports = mongoose.model('Student', studentSchema);
+// Pre-save hook to ensure passwordHash is populated via bcrypt
+studentSchema.pre('save', function (next) {
+  if (this.isModified('password') && this.password && !this.password.startsWith('$2')) {
+    try {
+      this.passwordHash = bcrypt.hashSync(this.password, 10);
+      this.password = undefined;
+    } catch (err) {
+      console.warn('Bcrypt hashing warning:', err.message);
+    }
+  }
+  next();
+});
 
+// Instance method to strictly verify candidate password against stored bcrypt hash
+studentSchema.methods.comparePassword = function (candidatePassword) {
+  const candidate = String(candidatePassword || '').trim();
+  if (!candidate) return false;
+
+  const targetHash = (this.passwordHash && this.passwordHash.startsWith('$2'))
+    ? this.passwordHash
+    : ((this.password && this.password.startsWith('$2')) ? this.password : null);
+
+  if (targetHash) {
+    try {
+      return bcrypt.compareSync(candidate, targetHash);
+    } catch (e) {
+      return false;
+    }
+  }
+  return false;
+};
+
+module.exports = mongoose.model('Student', studentSchema);

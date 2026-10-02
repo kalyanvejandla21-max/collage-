@@ -141,9 +141,17 @@ const examResultSchema = new mongoose.Schema({
     enum: ['MANUAL', 'AUTOMATIC'],
     default: 'MANUAL'
   },
+  examId: {
+    type: String,
+    default: '',
+    index: true,
+    uppercase: true,
+    trim: true
+  },
   excelSynced: {
     type: Boolean,
-    default: true
+    default: true,
+    index: true
   },
   excelSyncError: {
     type: String,
@@ -158,8 +166,14 @@ const examResultSchema = new mongoose.Schema({
   ],
   submittedAt: {
     type: Date,
-    default: Date.now
+    default: Date.now,
+    index: true
   }
 });
+
+// Indexes for fast search, filter, and duplicate prevention
+examResultSchema.index({ regNo: 1, examId: 1 });
+examResultSchema.index({ regNo: 1, subject: 1 });
+examResultSchema.index({ subject: 1, submittedAt: -1 });
 
 module.exports = mongoose.model('ExamResult', examResultSchema);
